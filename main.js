@@ -279,13 +279,14 @@ ipcMain.handle('read-zip-contents', async (e, filePath) => {
 
 // ─── FIND SNAP ────────────────────────────────────────────────────────────────
 ipcMain.handle('find-snap', async (e, shortName) => {
+  const snapDir = path.join(__dirname, 'snap');
+  if (!fs.existsSync(snapDir)) return { noFolder: true };
   const exts = [
     { ext: 'png',  mime: 'image/png'  },
     { ext: 'jpg',  mime: 'image/jpeg' },
     { ext: 'jpeg', mime: 'image/jpeg' },
     { ext: 'webp', mime: 'image/webp' },
   ];
-  const snapDir = path.join(__dirname, 'snap');
   for (const { ext, mime } of exts) {
     const p = path.join(snapDir, shortName + '.' + ext);
     if (fs.existsSync(p)) {

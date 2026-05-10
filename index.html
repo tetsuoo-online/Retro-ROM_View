@@ -2592,15 +2592,17 @@ function showCtxMenu(e, file) {
       emptyEl.textContent = 'Sélectionne un jeu'; return;
     }
     const url = await window.electronAPI.findSnap(shortName);
-    if (url) {
-      img.src = url;
-      img.style.display = 'block';
-      emptyEl.style.display = 'none';
-    } else {
-      img.style.display = 'none';
-      emptyEl.style.display = '';
-      emptyEl.textContent = 'Aucune image';
-    }
+if (url && typeof url === 'string') {
+  img.src = url;
+  img.style.display = 'block';
+  emptyEl.style.display = 'none';
+} else {
+  img.style.display = 'none';
+  emptyEl.style.display = '';
+  emptyEl.innerHTML = url?.noFolder
+    ? `<div style="text-align:center">Aucune image<br><span style="color:#fff;font-size:10px">(le dossier <b><i>snap</i></b> n'existe pas)</span></div>`
+    : '<div style="text-align:center">Aucune image</div>';
+}
   };
 })();
 
