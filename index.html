@@ -1,0 +1,2678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[ R3TRO-ROM VIEW v2.6 by Tetsuoo ]</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1d28; --border:#252836;
+    --accent:#e8a045; --accent2:#5b8ef0; --green:#4fc97e; --red:#e85555; --darkblue:#324e84;
+    --text:#d4d8e8; --text-dim:#5a6080; --text-mid:#8890b0;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'JetBrains Mono',monospace; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* HEADER */
+  header { padding:8px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; background:var(--bg2); flex-shrink:0; flex-wrap:wrap; position:relative; }
+
+  /* BARRE DE CHARGEMENT DISCRÈTE */
+  #hdr-loading-bar {
+    position:absolute; bottom:0; left:0; right:0; height:2px;
+    overflow:hidden; opacity:0; pointer-events:none;
+    transition:opacity 0.15s;
+  }
+  #hdr-loading-bar.vis { opacity:1; }
+  #hdr-loading-inner {
+    position:absolute; top:0; left:0; width:45%; height:100%;
+    background:linear-gradient(90deg, transparent 0%, var(--accent) 40%, var(--accent2) 60%, transparent 100%);
+    animation:hdr-loading-slide 1.4s ease-in-out infinite;
+  }
+  @keyframes hdr-loading-slide {
+    0%   { transform:translateX(-100%); }
+    100% { transform:translateX(240%); }
+  }
+  h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; color:var(--accent); white-space:nowrap; letter-spacing:-0.5px; margin-right:4px; }
+  h1 span { color:var(--text-dim); font-weight:400; }
+  .hbtn { background:var(--bg3); border:1px solid var(--border); color:var(--text-mid); font-family:'JetBrains Mono',monospace; font-size:11px; padding:5px 10px; border-radius:3px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+  .hbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .hbtn.loaded { border-color:var(--green); color:var(--green); }
+  .hdr-div { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+  #hdr-zoom { display:flex; align-items:center; gap:3px; }
+  #hdr-zoom > span { font-size:10px; color:var(--text-dim); white-space:nowrap; }
+  .zbtn { background:var(--bg3); border:1px solid var(--border); color:var(--text-mid); font-size:13px; line-height:1; width:20px; height:20px; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; font-family:'JetBrains Mono',monospace; }
+  .zbtn:hover { border-color:var(--accent); color:var(--accent); }
+  #zoom-val { font-size:10px; color:var(--text-dim); min-width:32px; text-align:center; }
+  #stats { font-size:11px; color:var(--text-dim); margin-left:auto; white-space:nowrap; }
+
+  /* LOAD SCREEN */
+  #scr-load { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; overflow-y:auto; padding:20px; }
+  .load-title { text-align:center; }
+  .load-title h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--accent); margin-bottom:8px; }
+  .load-title p { font-size:12px; color:var(--text-dim); line-height:1.7; }
+
+  /* Deux panneaux côte à côte */
+  .load-panels { display:flex; gap:16px; width:100%; max-width:900px; margin-bottom: 30px; align-items:flex-start; }
+  .load-panel {
+    flex:1; min-width:0; background:var(--bg2); border:2px solid #4fc97e; border-radius:16px;
+    display:flex; flex-direction:column; overflow:hidden; transition:border-color 0.2s;
+  }
+  .load-panel.dragover { border-color:var(--accent); }
+  .load-panel-hdr {
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .load-panel-icon { font-size:16px; }
+  .load-panel-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--text); flex:1; }
+  .load-panel-step { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); }
+  .load-panel-items { flex:1; padding:8px; display:flex; flex-direction:column; gap:4px; min-height:80px; max-height:900px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .load-panel-empty { font-size:11px; color:var(--text-dim); text-align:center; padding:18px 0; flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; }
+  .load-panel-empty .lpe-icon { font-size:22px; opacity:0.3; }
+  .load-panel-footer {
+    padding:8px; border-top:1px solid var(--border); flex-shrink:0;
+  }
+
+  /* Item ligne (dossier ou dat) */
+  .lp-item {
+    display:flex; align-items:center; gap:7px; padding:6px 9px;
+    background:var(--bg3); border:1px solid var(--border); border-radius:5px;
+    font-size:11px; transition:border-color 0.15s;
+  }
+  .lp-item.disabled { opacity:0.45; }
+  .lp-toggle {
+    flex-shrink:0; width:20px; height:20px; border-radius:3px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--border); background:var(--bg); font-size:11px;
+    font-weight:700; transition:all 0.15s; color:var(--green);
+  }
+  .lp-toggle:hover { border-color:var(--text-mid); }
+  .lp-toggle.on { border-color:var(--green); background:#4fc97e18; color:var(--green); }
+  .lp-toggle.off { border-color:var(--border); background:var(--bg); color:var(--text-dim); }
+  .lp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .lp-name { flex:1; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lp-count { font-size:10px; color:var(--text-dim); white-space:nowrap; flex-shrink:0; }
+  .lp-x { cursor:pointer; color:var(--text-dim); font-size:12px; flex-shrink:0; padding:2px; transition:color 0.15s; }
+  .lp-x:hover { color:var(--red); }
+
+  .btn-add-item { width:100%; background:transparent; border:1px dashed var(--border); color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:11px; padding:7px; border-radius:5px; cursor:pointer; transition:all 0.15s; text-align:center; }
+  .btn-add-item:hover { border-color:var(--accent); color:var(--accent); }
+
+  #btn-go { background:var(--green); opacity:0.85; border:none; color:#000; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; padding:10px 30px; border-radius:4px; cursor:pointer; transition:opacity 0.15s; display:none; }
+  #btn-go:hover { opacity:1; }
+  #btn-go.vis { display:block; }
+
+  /* PROGRESS */
+  #scr-prog { flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  #prog-lbl { font-size:12px; color:var(--text-mid); }
+  #prog-out  { width:320px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  #prog-bar  { height:100%; width:0%; background:var(--accent); transition:width 0.12s; }
+
+  /* APP */
+  #scr-app { display:none; flex:1; overflow:hidden; flex-direction:row; }
+
+  /* LEFT — liste */
+  #left { width:340px; min-width:180px; max-width:560px; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--bg2); position:relative; }
+  #left-resize-handle {
+    position:absolute; right:0; top:0; bottom:0; width:5px; cursor:col-resize;
+    background:transparent; z-index:10; transition:background 0.15s;
+  }
+  #left-resize-handle:hover, #left-resize-handle.dragging { background:var(--accent); opacity:0.6; }
+  #list-count-bar { display:flex; align-items:center; gap:6px; padding:5px 12px 4px; flex-shrink:0; cursor:pointer; user-select:none; transition:background 0.12s; }
+  #list-count-bar:hover { background:var(--bg3); }
+  #list-count { font-size:11px; font-weight:700; color:var(--green); letter-spacing:0.2px; flex:1; }
+  #list-count-arrow { font-size:9px; color:var(--text-dim); transition:transform 0.2s; }
+  #list-count-bar.collapsed #list-count-arrow { transform:rotate(-90deg); }
+  #rom-list { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  #rom-list.collapsed { display:none; }
+  #toolbar { padding:9px 11px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:7px; flex-shrink:0; overflow:hidden; transition:max-height 0.25s ease, padding 0.25s ease, opacity 0.2s; max-height:500px; }
+  #toolbar.collapsed { max-height:0; padding-top:0; padding-bottom:0; opacity:0; pointer-events:none; }
+  #toolbar-toggle { display:flex; align-items:center; gap:6px; padding:4px 11px; cursor:pointer; user-select:none; flex-shrink:0; border-bottom:1px solid var(--border); background:var(--bg2); transition:background 0.15s; }
+  #toolbar-toggle:hover { background:var(--bg3); }
+  #toolbar-toggle-arrow { font-size:9px; color:var(--text-dim); transition:transform 0.25s; }
+  #toolbar-toggle.collapsed #toolbar-toggle-arrow { transform:rotate(-90deg); }
+  #toolbar-toggle-label { font-size:10px; color:var(--text-dim); }
+  #toolbar-toggle-summary { font-size:10px; color:var(--text-mid); margin-left:4px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0; transition:opacity 0.15s; }
+  #toolbar-toggle.collapsed #toolbar-toggle-summary { opacity:1; }
+  .toolbar-chip-row { display:flex; gap:6px; flex-wrap:wrap; padding:4px 0; border-bottom:1px solid var(--border); margin-bottom:2px; }
+  .toolbar-chip-row:empty { display:none; }
+  .toolbar-hide-row { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text-dim); padding:4px 0; }
+  .toolbar-hide-row label { cursor:pointer; display:flex; align-items:center; gap:5px; }
+  .toolbar-hide-row input[type=checkbox] { accent-color:var(--accent); cursor:pointer; }
+  #search-wrap { position:relative; padding:7px 11px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg2); }
+  #search { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:4px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12px; padding:7px 28px 7px 10px; outline:none; transition:border-color 0.2s; }
+  #search:focus { border-color:var(--accent); }
+  #search::placeholder { color:var(--text-dim); }
+  #sch-clr { position:absolute; right:7px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:13px; display:none; padding:2px 4px; }
+  #sch-clr:hover { color:var(--text); }
+  #filter-row { display:flex; gap:4px; flex-wrap:wrap; }
+  .fbtn { background:var(--bg3); border:1px solid var(--border); color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 7px; border-radius:3px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+  .fbtn:hover { border-color:var(--text-mid); color:var(--text-mid); }
+  .fbtn.on { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
+  .fbtn:disabled { opacity:0.3; cursor:default; pointer-events:none; }
+  .fbtn-rs.on { background:var(--rs-color); border-color:var(--rs-color); color:#000; }
+  #rs-filter-row { display:none; gap:4px; flex-wrap:wrap; }
+  #folder-filter-row { display:none; gap:4px; flex-wrap:wrap; }
+  #sort-row { display:flex; align-items:center; gap:6px; }
+  #sort-row label { font-size:10px; color:var(--text-dim); white-space:nowrap; }
+  #sort-sel { flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text-mid); font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 6px; border-radius:3px; outline:none; }
+  #sort-rev { background:var(--bg3); border:1px solid var(--border); color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; width:22px; height:22px; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; flex-shrink:0; }
+  #sort-rev:hover { border-color:var(--accent); color:var(--accent); }
+  #sort-rev.asc::after  { content:'▼'; }
+  #sort-rev.desc::after { content:'▲'; }
+  #dat-bar { padding:5px 11px; border-bottom:1px solid var(--border); display:none; gap:5px; flex-wrap:wrap; align-items:center; flex-shrink:0; }
+  #dat-bar.vis { display:flex; }
+  .dat-chip { font-size:9px; padding:2px 7px; border-radius:10px; border:1px solid; font-weight:700; cursor:default; display:flex; align-items:center; gap:4px; }
+  .dat-chip .chip-x { cursor:pointer; opacity:0.6; font-size:11px; line-height:1; }
+  .dat-chip .chip-x:hover { opacity:1; }
+  /* chips dossiers dans la dat-bar : coins carrés pour les différencier */
+  .folder-bar-chip { font-size:9px; padding:2px 7px; border-radius:3px; border:1px solid; font-weight:700; cursor:default; display:flex; align-items:center; gap:4px; }
+  .folder-bar-chip .chip-x { cursor:pointer; opacity:0.6; font-size:11px; line-height:1; }
+  .folder-bar-chip .chip-x:hover { opacity:1; }
+  #list-sep { height:3px; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 55%, transparent 100%); flex-shrink:0; }
+  #list-count { font-size:11px; font-weight:700; color:var(--green); padding:5px 12px 4px; flex-shrink:0; letter-spacing:0.2px; }
+  #rom-list { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+
+  .ritem { padding:8px 11px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+  .ritem:hover  { background:var(--bg3); }
+  .ritem.active { background:var(--bg3); border-left:2px solid var(--accent); padding-left:9px; }
+  .ri-r1 { display:flex; align-items:center; gap:5px; overflow:hidden; }
+  .ri-name { font-size:12px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+  .ri-r2   { font-size:10px; color:var(--text-dim); margin-top:2px; display:flex; gap:8px; }
+  .ri-desc { font-size:10px; color:var(--text-mid); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ri-rs   { font-size:9px; margin-top:3px; display:flex; gap:3px; flex-wrap:wrap; }
+  .ri-fold { font-size:9px; margin-top:2px; display:flex; gap:3px; flex-wrap:wrap; }
+
+  .bdg { flex-shrink:0; font-size:9px; font-weight:700; padding:1px 5px; border-radius:2px; letter-spacing:0.3px; }
+  .bdg-ok    { background:#4fc97e18; color:var(--green);    border:1px solid #4fc97e35; }
+  .bdg-miss  { background:#55555518; color:var(--text-dim); border:1px solid #55555535; }
+  .bdg-orph  { background:#e8554518; color:var(--red);      border:1px solid #e8554535; }
+  .bdg-clone { background:#5b8ef018; color:var(--accent2);  border:1px solid #5b8ef035; }
+  .bdg-dupe  { background:#e8554518; color:#ff8080;         border:1px solid #e8554535; }
+  .bdg-n     { background:var(--bg); color:var(--text-dim); border:1px solid var(--border); }
+  .bdg-multi { background:#f0c03018; color:#f0c030;         border:1px solid #f0c03035; }
+  .rs-tag    { font-size:9px; font-weight:700; padding:1px 5px; border-radius:10px; letter-spacing:0.2px; }
+  .fold-tag  { font-size:9px; padding:1px 5px; border-radius:2px; }
+
+  /* ─── FILTER BUTTON GROUPS (filter + X pill) ─── */
+  .fbtn-group { display:inline-flex; align-items:center; }
+  .fbtn-group .fbtn { border-radius:10px 0 0 10px !important; border-right-width:0 !important; }
+  .fbtn-group-folder .fbtn { border-radius:3px 0 0 3px !important; }
+  .fbtn-grp-x {
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:10px;
+    padding:3px 6px; border-radius:0 10px 10px 0; cursor:pointer;
+    transition:all 0.15s; line-height:1; flex-shrink:0;
+  }
+  .fbtn-group-folder .fbtn-grp-x { border-radius:0 3px 3px 0; }
+  .fbtn-grp-x:hover { background:#e8554518; color:var(--red); border-color:#e8554550; }
+  .fbtn-group .fbtn-rs.on + .fbtn-grp-x { border-color:var(--rs-color,var(--accent)); }
+
+  /* MIDDLE — détail */
+  #middle { flex:1; display:flex; flex-direction:column; overflow:hidden; border-right:1px solid var(--border); }
+  #empty-msg { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; color:var(--text-dim); font-size:12px; }
+  #empty-msg svg { opacity:0.12; }
+  #det-hdr { padding:13px 18px; border-bottom:1px solid var(--border); background:var(--bg2); flex-shrink:0; display:none; }
+  #det-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:var(--text); }
+  #det-meta  { font-size:10px; color:var(--text-dim); margin-top:4px; display:flex; gap:12px; flex-wrap:wrap; }
+  #det-body  { flex:1; overflow-y:auto; padding:14px 18px; display:none; flex-direction:column; gap:16px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+
+  .sec-title { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .sec-collapsable { cursor:pointer; user-select:none; display:flex; align-items:center; gap:5px; padding:3px 0; transition:color 0.15s; }
+  .sec-collapsable:hover { color:var(--text-mid); }
+  .sec-arr { font-size:8px; flex-shrink:0; }
+  .sec-inner { margin-top:2px; }
+  .rtbl { width:100%; border-collapse:collapse; font-size:11px; }
+  .rtbl th { text-align:left; padding:5px 10px; color:var(--text-dim); font-weight:400; font-size:10px; border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:0.5px; }
+  .rtbl td { padding:6px 10px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+  .rtbl tr:hover td { background:var(--bg3); }
+  .rtbl tr.del-row td { opacity:0.35; }
+  .rtbl tr.del-row .col-fn { text-decoration:line-through; color:var(--red); opacity:1; }
+  .col-fn  { font-weight:500; word-break:break-all; }
+  .col-fav  { width:28px; text-align:center; padding:4px 6px; }
+  .col-fav input[type=checkbox] { cursor:pointer; accent-color:var(--accent); width:13px; height:13px; }
+  .col-sz  { color:var(--text-mid); white-space:nowrap; }
+  .col-act { text-align:right; white-space:nowrap; }
+  .del-btn { background:none; border:1px solid #e8554535; color:var(--red); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight: bold; padding:2px 7px; border-radius:2px; cursor:pointer; transition:all 0.15s; }
+  .del-btn:hover { background:#e8554518; }
+  .del-btn.undo { border-color:#4fc97e35; color:var(--green); }
+  .del-btn.undo:hover { background:#4fc97e11; }
+  .open-btn { background:none; border:1px solid #1e2f51; color:var(--darkblue); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight: bold; padding:2px 7px; border-radius:2px; cursor:pointer; transition:all 0.15s; margin-left:4px; }
+  .open-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+  .col-path { color:var(--text-dim); font-size:10px; max-width:30vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; transition:color 0.15s; }
+  .col-path:hover { color:var(--accent); text-decoration:underline; }
+  .clone-item { display:flex; align-items:center; gap:7px; padding:5px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; font-size:11px; margin-bottom:4px; }
+  .clone-item .ci-name { font-weight:500; color:var(--text); white-space:nowrap; }
+  .clone-item .ci-desc { color:var(--text-mid); font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .alert { padding:9px 13px; border-radius:4px; font-size:11px; line-height:1.6; }
+  .al-warn { background:#e8a04510; border:1px solid #e8a04530; color:#e8b060; }
+  .al-info { background:#5b8ef010; border:1px solid #5b8ef030; color:#7aa8f5; }
+  .al-err  { background:#e8554510; border:1px solid #e8554530; color:#f07070; }
+  .al-ok   { background:#4fc97e10; border:1px solid #4fc97e30; color:#5fd990; }
+  .al-dupe { background:#ff808010; border:1px solid #ff808030; color:#ff9090; }
+
+  /* RIGHT — panneau romset fixe */
+  #rs-panel {
+    width:310px; min-width:180px; max-width:620px; flex-shrink:0; display:flex; flex-direction:column;
+    background:var(--bg2); overflow:hidden; position:relative;
+  }
+  #rs-resize-handle {
+    position:absolute; left:0; top:0; bottom:0; width:5px; cursor:col-resize;
+    background:transparent; z-index:10; transition:background 0.15s;
+  }
+  #rs-resize-handle:hover, #rs-resize-handle.dragging { background:var(--accent); opacity:0.6; }
+  #rs-panel-hdr {
+    padding:10px 14px 10px 16px; border-bottom:1px solid var(--border);
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    color:var(--text-mid); flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
+	cursor:pointer; user-select:none;
+  }
+  #rs-panel-body { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  #rs-panel-empty { flex:1; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-dim); text-align:center; padding:20px; }
+
+  /* Matrice romset */
+  .rs-matrix { padding:10px 0; }
+  .rs-matrix-row {
+    display:flex; align-items:flex-start; gap:0;
+    padding:8px 14px; border-bottom:1px solid var(--border);
+    transition:background 0.1s;
+  }
+  .rs-matrix-row:last-child { border-bottom:none; }
+  .rs-matrix-row:hover { background:var(--bg3); }
+  .rs-col-label { width:90px; flex-shrink:0; }
+  .rs-col-label .rs-name { font-size:11px; font-weight:700; }
+  .rs-col-label .rs-ver  { font-size:9px; color:var(--text-dim); margin-top:1px; }
+  .rs-col-status { flex:1; }
+  .rs-status-ok   { font-size:10px; color:var(--green); font-weight:600; }
+  .rs-status-no   { font-size:10px; color:var(--text-dim); }
+  .rs-status-clone { font-size:9px; color:var(--accent2); margin-top:2px; }
+  .rs-clones-count { font-size:9px; color:var(--text-dim); margin-top:1px; }
+  .rs-icon { font-size:13px; margin-right:6px; flex-shrink:0; margin-top:1px; }
+
+  /* folders dans le panneau */
+  .rs-folders-section { padding:10px 14px; border-top:1px solid var(--border); }
+  .rs-folders-title { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .rs-folder-row { display:flex; align-items:center; gap:7px; padding:4px 0; font-size:10px; border-bottom:1px solid var(--border); }
+  .rs-folder-row:last-child { border-bottom:none; }
+
+  /* ─── PANNEAU CONTENU ZIP ─────────────────────────────────────────────────── */
+  #zip-panel {
+    width:260px; min-width:160px; max-width:500px; flex-shrink:0; display:flex; flex-direction:column;
+    background:var(--bg2); overflow:hidden; position:relative; border-right:1px solid var(--border);
+  }
+  #zip-resize-handle {
+    position:absolute; left:0; top:0; bottom:0; width:5px; cursor:col-resize;
+    background:transparent; z-index:10; transition:background 0.15s;
+  }
+  #zip-resize-handle:hover, #zip-resize-handle.dragging { background:var(--accent); opacity:0.6; }
+  #zip-panel-hdr {
+    padding:10px 14px 10px 16px; border-bottom:1px solid var(--border);
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    color:var(--text-mid); flex-shrink:0; display:flex; align-items:center; gap:8px; justify-content:space-between;
+    cursor:pointer; user-select:none;
+  }
+  #zip-panel-empty {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--text-dim); text-align:center; padding:20px;
+  }
+  #zip-panel-body { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .zip-hdr-row {
+    display:grid; grid-template-columns:1fr auto auto auto; gap:0 6px;
+    padding:4px 10px; border-bottom:1px solid var(--border); background:var(--bg3);
+    font-size:9px; color:var(--text-dim); font-weight:700; text-transform:uppercase;
+    letter-spacing:0.5px; flex-shrink:0; position:sticky; top:0; z-index:1;
+  }
+  .zip-summary {
+    padding:5px 10px; font-size:10px; border-bottom:1px solid var(--border);
+    display:flex; gap:5px; flex-wrap:wrap; align-items:center; background:var(--bg2);
+  }
+  .zip-entry {
+    display:grid; grid-template-columns:1fr auto auto auto; gap:2px 6px;
+    padding:4px 10px; border-bottom:1px solid var(--border); font-size:10px; align-items:center;
+  }
+  .zip-entry:last-child { border-bottom:none; }
+  .zip-entry:hover { background:var(--bg3); }
+  .zip-fn  { color:var(--text); word-break:break-all; }
+  .zip-crc { color:var(--text-dim); font-size:9px; font-family:'JetBrains Mono',monospace; }
+  .zip-sz  { color:var(--text-dim); font-size:9px; white-space:nowrap; }
+  .zip-icon { font-size:11px; text-align:center; }
+  .zip-entry-ok   .zip-fn { color:var(--green); }
+  .zip-entry-bad  .zip-fn { color:var(--red); }
+  .zip-entry-extra .zip-fn { color:var(--accent); }
+  .zip-miss-row {
+    display:grid; grid-template-columns:1fr auto auto auto; gap:2px 6px;
+    padding:4px 10px; border-bottom:1px solid var(--border); font-size:10px;
+    align-items:center; opacity:0.45;
+  }
+  .zip-miss-row:hover { background:var(--bg3); opacity:0.7; }
+  .zip-miss-fn { color:var(--text-dim); word-break:break-all; text-decoration:line-through; }
+  .zip-bdg { font-size:8px; padding:1px 4px; border-radius:2px; border:1px solid; white-space:nowrap; font-weight:700; }
+  .zip-bdg-ok    { color:var(--green);    background:#4fc97e18; border-color:#4fc97e35; }
+  .zip-bdg-bad   { color:var(--red);      background:#e8554518; border-color:#e8554535; }
+  .zip-bdg-extra { color:var(--accent);   background:#e8a04518; border-color:#e8a04535; }
+  .zip-bdg-miss  { color:var(--text-dim); background:var(--bg3); border-color:var(--border); }
+  /* ─── PANEL COLLAPSE ─────────────────────────────────────────────────────── */
+  .panel-collapse-btn {
+    background:none; border:none; color:var(--text-dim); cursor:pointer;
+    font-size:11px; padding:0 2px 0 6px; transition:color 0.15s;
+    flex-shrink:0; line-height:1; font-family:inherit;
+  }
+  .panel-collapse-btn:hover { color:var(--accent); }
+  .panel-collapsed-tab {
+    display:none; position:absolute; top:0; left:0; width:28px; height:100%;
+    flex-direction:column; align-items:center; justify-content:flex-start;
+    padding-top:14px; gap:10px; z-index:15; cursor:pointer;
+    color:var(--text-dim); transition:color 0.15s; background:var(--bg2);
+  }
+  .panel-collapsed-tab:hover { color:var(--text-mid); }
+  .pct-label {
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    font-size:10px; font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; font-family:'Syne',sans-serif;
+  }
+  .pct-arrow { font-size:11px; }
+  #zip-panel.panel-collapsed { width:28px !important; min-width:28px !important; cursor:pointer; }
+  #rs-panel.panel-collapsed  { width:28px !important; min-width:28px !important; cursor:pointer; }
+  #zip-panel.panel-collapsed #zip-collapsed-tab,
+  #rs-panel.panel-collapsed  #rs-collapsed-tab  { display:flex; }
+  /* ZIP selected file row */
+  .rtbl tbody tr { cursor:pointer; }
+  .zip-sel-row td { background:#5b8ef018 !important; }
+  .zip-sel-row:hover td { background:#5b8ef028 !important; }
+  .zip-sel-row td:nth-child(2) { border-left:2px solid var(--accent2); }
+  .rs-folder-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .rs-folder-name { flex:1; color:var(--text-mid); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rs-folder-status { font-size:9px; font-weight:700; }
+
+  /* EXPORT BAR */
+  #exp-bar { display:none; padding:9px 18px; background:var(--bg2); border-top:1px solid var(--border); align-items:center; gap:12px; flex-shrink:0; }
+  #exp-bar.vis { display:flex; }
+  #exp-count { font-size:11px; color:var(--accent); }
+  .btn-exp { background:var(--accent); border:none; color:#000; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; padding:6px 14px; border-radius:3px; cursor:pointer; transition:opacity 0.15s; }
+  .btn-exp:hover { opacity:0.85; }
+  .btn-clr { background:none; border:1px solid var(--border); color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:11px; padding:5px 12px; border-radius:3px; cursor:pointer; transition:all 0.15s; }
+  .btn-clr:hover { border-color:var(--text-mid); color:var(--text-mid); }
+  .load-more { padding:11px; text-align:center; font-size:11px; color:var(--text-dim); cursor:pointer; border-bottom:1px solid var(--border); }
+  .load-more:hover { background:var(--bg3); color:var(--text-mid); }
+  mark { background:#e8a04540; color:var(--accent); border-radius:2px; padding:0 1px; }
+
+  /* panneau romset : lignes compatibilité cliquables */
+  .rsp-section { border-bottom:1px solid var(--border); }
+  .rsp-sec-hdr { padding:7px 12px; font-size:9px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:background 0.1s; }
+  .rsp-sec-hdr:hover { background:var(--bg3); }
+  .rsp-sec-body { }
+  .rsp-meta { padding:8px 12px 6px; display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-size:10px; }
+  .rsp-meta-k { color:var(--text-dim); }
+  .rsp-meta-v { color:var(--text); word-break:break-all; }
+  .rom-list-wrap { max-height:380px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .rom-entry { display:grid; grid-template-columns:1fr auto auto; gap:2px 6px; padding:4px 12px; border-bottom:1px solid var(--border); font-size:10px; align-items:baseline; }
+  .rom-entry:last-child { border-bottom:none; }
+  .rom-entry:hover { background:var(--bg3); }
+  .rom-entry.rom-merged { opacity:0.5; }
+  .rom-fn  { color:var(--text); word-break:break-all; }
+  .rom-crc { color:var(--text-dim); font-size:9px; font-family:'JetBrains Mono',monospace; }
+  .rom-sz  { color:var(--text-dim); font-size:9px; white-space:nowrap; }
+  .rom-merge-lbl { font-size:8px; color:var(--accent2); padding:0 3px; background:#5b8ef018; border:1px solid #5b8ef030; border-radius:2px; white-space:nowrap; margin-left:4px; }
+  .rom-bad { font-size:8px; color:var(--red); padding:0 3px; background:#e8554515; border:1px solid #e8554530; border-radius:2px; margin-left:4px; }
+  .rsp-absent { padding:20px 12px; font-size:11px; color:var(--text-dim); text-align:center; }
+  .rs-compat-sum { padding:8px 12px 4px; border-top:1px solid var(--border); }
+  .rs-compat-title { font-size:9px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; padding:0; }
+  .rs-compat-row { display:flex; align-items:center; gap:7px; padding:5px 8px; border-radius:3px; font-size:10px; transition:background 0.12s; margin-bottom:1px; }
+  .rs-compat-row.clickable { cursor:pointer; }
+  .rs-compat-row.clickable:hover { background:var(--bg3); }
+  .rs-compat-row.active { background:var(--bg3); outline:1px solid var(--row-color,var(--accent)); }
+  .rs-compat-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .rs-compat-lbl { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rs-compat-val { font-size:9px; font-weight:700; }
+
+  /* Chips "Autre DAT" dans lcard-other */
+  #other-chips { display:flex; flex-direction:column; gap:3px; margin-top:4px; max-height:90px; overflow-y:auto; width:100%; }
+  .other-chip { display:flex; align-items:center; gap:4px; font-size:9px; font-weight:700;
+    padding:2px 6px; border-radius:3px; border:1px solid; background:transparent; }
+  .other-chip-lbl { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .other-chip-x { cursor:pointer; opacity:0.6; font-size:10px; line-height:1; flex-shrink:0; }
+  .other-chip-x:hover { opacity:1; }
+
+  /* ─── CONSOLE DRAWER ───────────────────────────────────────────────────── */
+  #console-drawer {
+    flex-shrink:0; display:flex; flex-direction:column;
+    border-top:1px solid var(--border); background:var(--bg2);
+    transition:height 0.2s ease;
+    height:180px; overflow:hidden;
+  }
+  #console-drawer.collapsed { height:28px; }
+  #console-drawer.hidden    { display:none; }
+  #console-bar {
+    display:flex; align-items:center; gap:6px;
+    padding:4px 10px; border-bottom:1px solid var(--border);
+    flex-shrink:0; cursor:pointer; user-select:none;
+    background:var(--bg2); transition:background 0.15s;
+    height:28px;
+  }
+  #console-bar:hover { background:var(--bg3); }
+  #console-bar-arrow { font-size:9px; color:var(--text-dim); transition:transform 0.2s; }
+  #console-drawer.collapsed #console-bar-arrow { transform:rotate(-90deg); }
+  #console-bar-title { font-size:10px; color:var(--text-dim); font-weight:700; letter-spacing:0.5px; }
+  #console-bar-status { font-size:10px; color:var(--text-dim); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-left:6px; }
+  #console-bar-status.running { color:var(--accent); }
+  #console-bar-status.done    { color:var(--green); }
+  #console-bar-status.err     { color:var(--red); }
+  .cbtn {
+    background:var(--bg3); border:1px solid var(--border); color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace; font-size:10px;
+    padding:2px 8px; border-radius:3px; cursor:pointer; white-space:nowrap;
+    transition:all 0.15s; flex-shrink:0;
+  }
+  .cbtn:hover { border-color:var(--accent); color:var(--accent); }
+  #console-output {
+    flex:1; overflow-y:auto; padding:6px 12px;
+    scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+    font-size:11px; line-height:1.6;
+  }
+  .cline { white-space:pre-wrap; word-break:break-all; padding:0; }
+  .cline.cmd  { color:var(--accent); }
+  .cline.err  { color:var(--red); }
+  .cline.done { color:var(--green); }
+  .cline.info { color:var(--accent2); }
+.emu-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+}
+.emu-overlay.hidden { display:none; }
+.emu-modal {
+  background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+  width:560px; max-width:96vw; max-height:80vh; display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.emu-modal-hdr {
+  padding:14px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.emu-modal-hdr h2 { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--accent); }
+.emu-modal-body { flex:1; overflow-y:auto; padding:14px 18px; }
+.emu-list { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.emu-row {
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:8px 10px;
+}
+.emu-row-label { flex:0 0 130px; font-size:11px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.emu-row-path  { flex:1; font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.emu-row-del {
+  background:none; border:1px solid #e8554535; color:var(--red);
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  padding:3px 7px; border-radius:3px; cursor:pointer; flex-shrink:0; transition:all 0.15s;
+}
+.emu-row-del:hover { background:var(--red); color:#fff; border-color:var(--red); }
+.emu-row-edit {
+  background:none; border:1px solid var(--border); color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  padding:3px 7px; border-radius:3px; cursor:pointer; flex-shrink:0; transition:all 0.15s;
+}
+.emu-row-edit:hover { border-color:var(--accent2); color:var(--accent2); }
+.emu-add-form {
+  display:flex; flex-direction:column; gap:10px;
+  padding-top:10px; border-top:1px solid var(--border);
+}
+.emu-add-form label { font-size:10px; color:var(--text-dim); display:block; margin-bottom:4px; }
+.emu-add-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.emu-add-form-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:2px; }
+/* token builder */
+.emu-tokens {
+  display:flex; flex-wrap:wrap; gap:5px; min-height:34px; padding:5px 7px;
+  background:var(--bg); border:1px solid var(--border); border-radius:3px; align-items:center;
+  transition:border-color 0.15s;
+}
+.emu-tokens:focus-within { border-color:var(--accent); }
+.emu-token {
+  display:inline-flex; align-items:center; gap:3px; padding:2px 7px 2px 8px;
+  border-radius:3px; font-size:10px; font-family:'JetBrains Mono',monospace; white-space:nowrap;
+}
+.emu-token-rom    { background:var(--accent)22;  color:var(--accent);  border:1px solid var(--accent)55; }
+.emu-token-rompath{ background:var(--accent2)22; color:var(--accent2); border:1px solid var(--accent2)55; }
+.emu-token-arg    { background:var(--bg3); color:var(--text-mid); border:1px solid var(--border); }
+.emu-token-up, .emu-token-dn, .emu-token-rm {
+  background:none; border:none; color:inherit; cursor:pointer; padding:0 2px;
+  opacity:0.45; font-size:9px; line-height:1;
+}
+.emu-token-up:hover, .emu-token-dn:hover, .emu-token-rm:hover { opacity:1; }
+.emu-token-row { display:flex; gap:5px; align-items:center; }
+.emu-token-input { flex:1; }
+.emu-token-shortcut {
+  background:var(--bg3); border:1px solid var(--border); color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  padding:5px 8px; border-radius:3px; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+}
+.emu-token-shortcut:hover { border-color:var(--accent); color:var(--accent); }
+.emu-input {
+  background:var(--bg); border:1px solid var(--border); color:var(--text);
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  padding:6px 9px; border-radius:3px; width:100%; transition:border-color 0.15s;
+}
+.emu-input:focus { outline:none; border-color:var(--accent); }
+.emu-path-wrap { display:flex; gap:4px; align-items:center; }
+.emu-path-wrap .emu-input { flex:1; }
+.emu-browse {
+  background:var(--bg3); border:1px solid var(--border); color:var(--text-mid);
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  padding:6px 8px; border-radius:3px; cursor:pointer; white-space:nowrap;
+  transition:all 0.15s; flex-shrink:0;
+}
+.emu-browse:hover { border-color:var(--accent2); color:var(--accent2); }
+.emu-add-btn {
+  background:var(--accent); border:none; color:#000;
+  font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+  padding:7px 14px; border-radius:3px; cursor:pointer; transition:opacity 0.15s; align-self:end;
+}
+.emu-add-btn:hover { opacity:0.85; }
+.emu-empty { font-size:11px; color:var(--text-dim); text-align:center; padding:16px 0; }
+
+/* ─── MENU CONTEXTUEL ───────────────────────────────────────────────────── */
+.ctx-menu {
+  position:fixed; z-index:2000;
+  background:var(--bg2); border:1px solid var(--border); border-radius:5px;
+  min-width:200px; padding:4px 0;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5); font-size:11px;
+}
+.ctx-menu.hidden { display:none; }
+.ctx-item {
+  padding:7px 14px; cursor:pointer; color:var(--text);
+  display:flex; align-items:center; gap:8px; transition:background 0.1s;
+}
+.ctx-item:hover { background:var(--bg3); color:var(--accent); }
+.ctx-item.ctx-disabled { color:var(--text-dim); cursor:default; }
+.ctx-item.ctx-disabled:hover { background:none; color:var(--text-dim); }
+.ctx-sep { height:1px; background:var(--border); margin:3px 0; }
+.ctx-sub-hdr {
+  padding:5px 14px; font-size:9px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:var(--text-dim); cursor:default;
+}
+
+/* ─── SNAP PANEL ─────────────────────────────────────────────────────────── */
+  #snap-panel {
+    flex-shrink:0; display:flex; flex-direction:column;
+    border-top:1px solid var(--border); background:var(--bg);
+    overflow:hidden; position:relative; height:28px;
+  }
+  #snap-handle {
+    position:absolute; top:0; left:0; right:0; height:5px;
+    cursor:ns-resize; z-index:5; transition:background 0.15s;
+  }
+  #snap-handle:hover, #snap-handle.dragging { background:var(--accent); opacity:0.6; }
+  #snap-bar {
+    display:flex; align-items:center; gap:6px; height:28px;
+    padding:0 10px; flex-shrink:0; cursor:pointer; user-select:none;
+    border-bottom:1px solid var(--border); transition:background 0.15s;
+  }
+  #snap-bar:hover { background:var(--bg3); }
+  #snap-bar-arrow { font-size:9px; color:var(--text-dim); transition:transform 0.2s; flex-shrink:0; }
+  #snap-panel.collapsed #snap-bar-arrow { transform:rotate(-90deg); }
+  #snap-bar-title { font-size:10px; color:var(--text-dim); font-weight:700; letter-spacing:0.5px; }
+  #snap-body {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding:8px; min-height:0;
+  }
+  #snap-img { max-width:100%; max-height:100%; object-fit:contain; display:none; border-radius:2px; }
+  #snap-empty-msg { font-size:11px; color:var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Retro-ROM <span>View</span></h1>
+  <button class="hbtn" id="hbtn-add-folder">📁 + Dossier</button>
+  <button class="hbtn" id="hbtn-add-dat">📄 + DAT</button>
+  <button class="hbtn" id="hbtn-emulators">🕹 Émulateurs</button>
+  <div class="hdr-div"></div>
+  <div id="hdr-zoom">
+    <span>Zoom&nbsp;</span>
+    <button class="zbtn" id="zoom-out" title="Ctrl+−">−</button>
+    <span id="zoom-val">100%</span>
+    <button class="zbtn" id="zoom-in"  title="Ctrl++">+</button>
+    <button class="zbtn" id="zoom-rst" title="Ctrl+0" style="font-size:9px;width:auto;padding:0 5px">↺</button>
+  </div>
+  <div id="stats"></div>
+  <div id="hdr-loading-bar"><div id="hdr-loading-inner"></div></div>
+</header>
+
+<!-- LOAD SCREEN -->
+<div id="scr-load">
+  <div class="load-title">
+    <h2 style="color:var(--green);">LOAD SCREEN</h2>
+    <p>Chargez un ou plusieurs dossiers de ROMs, puis les DATs correspondants.<br>Chaque dossier sera identifié séparément dans l'analyse.</p>
+  </div>
+
+  <div class="load-panels">
+    <!-- Panneau Dossiers -->
+    <div class="load-panel" id="panel-folders">
+      <div class="load-panel-hdr">
+        <span class="load-panel-icon">📁</span>
+        <span class="load-panel-title">Dossier(s) de ROMs</span>
+        <span class="load-panel-step">Étape 1</span>
+      </div>
+      <div class="load-panel-items" id="folders-items">
+        <div class="load-panel-empty" id="folders-empty">
+          <span class="lpe-icon">📂</span>
+          <span>Aucun dossier chargé</span>
+        </div>
+      </div>
+      <div class="load-panel-footer">
+        <button class="btn-add-item" id="btn-add-folder-load">＋ Ajouter un dossier</button>
+      </div>
+    </div>
+
+    <!-- Panneau DATs -->
+    <div class="load-panel" id="panel-dats">
+      <div class="load-panel-hdr">
+        <span class="load-panel-icon">📄</span>
+        <span class="load-panel-title">DAT(s) MAME</span>
+        <span class="load-panel-step">Étape 2 — optionnel</span>
+      </div>
+      <div class="load-panel-items" id="dats-items">
+        <div class="load-panel-empty" id="dats-empty">
+          <span class="lpe-icon">📋</span>
+          <span>Glisser des fichiers DAT / XML ici</span>
+        </div>
+      </div>
+      <div class="load-panel-footer">
+        <button class="btn-add-item" id="btn-add-dat-load">＋ Ajouter un DAT</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="btn-go">▶▶▶</button>
+</div>
+
+<!-- PROGRESS -->
+<div id="scr-prog">
+  <div id="prog-lbl">Chargement...</div>
+  <div id="prog-out"><div id="prog-bar"></div></div>
+</div>
+
+<!-- APP -->
+<div id="scr-app">
+  <!-- LISTE -->
+  <div id="left">
+    <div id="left-resize-handle" title="Redimensionner"></div>
+    <div id="toolbar-toggle">
+      <span id="toolbar-toggle-arrow">▼</span>
+      <span id="toolbar-toggle-label">Filtres &amp; tri</span>
+      <span id="toolbar-toggle-summary"></span>
+    </div>
+    <div id="search-wrap">
+      <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" spellcheck="false">
+      <button id="sch-clr">✕</button>
+    </div>
+    <div id="toolbar">
+      <div id="filter-row">
+        <button class="fbtn on" data-f="all">Tous</button>
+        <button class="fbtn" data-f="parents" id="fb-parents" disabled>Parents</button>
+        <button class="fbtn" data-f="clones"  id="fb-clones"  disabled>Clones</button>
+        <button class="fbtn" data-f="orphans" id="fb-orphans" disabled>Orphelins</button>
+        <button class="fbtn" data-f="missing" id="fb-missing" disabled>Manquants</button>
+        <button class="fbtn" data-f="dupes">Doublons</button>
+        <button class="fbtn" data-f="multi" id="fb-multi" disabled>Multi-DAT</button>
+      </div>
+      <div id="rs-filter-row"></div>
+      <div id="folder-filter-row"></div>
+      <div id="sort-row">
+        <label>Tri</label>
+        <select id="sort-sel">
+          <option value="name">Nom A→Z</option>
+          <option value="desc">Titre</option>
+          <option value="clones">Nb clones</option>
+          <option value="size">Taille</option>
+          <option value="rs-count">Nb romsets</option>
+        </select>
+        <button id="sort-rev" class="asc" title="Inverser le tri"></button>
+      </div>
+    </div>
+    <div id="dat-bar"></div>
+    <div class="toolbar-hide-row" style="padding:5px 11px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <label><input type="checkbox" id="chk-hide-tags"> Cacher DATs / Dossiers dans les résultats</label>
+    </div>
+    <div id="list-sep"></div>
+    <div id="list-count-bar">
+      <span id="list-count"></span>
+      <span id="list-count-arrow">▼</span>
+    </div>
+    <div id="rom-list"></div>
+    <div id="snap-panel" class="collapsed">
+      <div id="snap-handle"></div>
+      <div id="snap-bar">
+        <span id="snap-bar-arrow">▼</span>
+        <span id="snap-bar-title">SNAP</span>
+      </div>
+      <div id="snap-body">
+        <img id="snap-img" alt="">
+        <span id="snap-empty-msg">Sélectionne un jeu</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DÉTAIL -->
+  <div id="middle">
+    <div id="empty-msg">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      Sélectionne un jeu
+    </div>
+    <div id="det-hdr">
+      <div id="det-title"></div>
+      <div id="det-meta"></div>
+    </div>
+    <div id="det-body"></div>
+
+    <!-- ─── CONSOLE DRAWER ────────────────────────────────────────────────────── -->
+    <div id="console-drawer">
+      <div id="console-bar">
+        <span id="console-bar-arrow">▼</span>
+        <span id="console-bar-title">CONSOLE</span>
+        <span id="console-bar-status"></span>
+        <button class="cbtn" id="cbtn-clear" title="Effacer">Effacer</button>
+        <button class="cbtn" id="cbtn-top"   title="Haut">↑</button>
+        <button class="cbtn" id="cbtn-bot"   title="Bas">↓</button>
+      </div>
+      <div id="console-output"></div>
+    </div>
+  </div>
+
+  <!-- PANNEAU CONTENU ZIP -->
+  <div id="zip-panel">
+    <div id="zip-resize-handle" title="Redimensionner"></div>
+    <div id="zip-panel-hdr">
+      <span>ZIP</span>
+      <span id="zip-panel-name" style="color:var(--text-dim);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-left:6px"></span>
+      <button class="panel-collapse-btn" id="zip-collapse-btn">▶</button>
+    </div>
+    <div id="zip-panel-empty">
+      <span>← Sélectionne<br>un jeu</span>
+    </div>
+    <div id="zip-panel-body" style="display:none"></div>
+    <div id="zip-collapsed-tab" class="panel-collapsed-tab">
+      <span class="pct-arrow">◀</span>
+      <span class="pct-label">ZIP</span>
+    </div>
+  </div>
+
+  <!-- PANNEAU ROMSET -->
+  <div id="rs-panel">
+    <div id="rs-resize-handle" title="Redimensionner"></div>
+    <div id="rs-panel-hdr">
+      <span>Compatibilité</span>
+      <span id="rs-panel-name" style="color:var(--text-dim);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-left:6px"></span>
+      <button class="panel-collapse-btn" id="rs-collapse-btn">▶</button>
+    </div>
+    <div id="rs-panel-empty">
+      <span>← Sélectionne<br>un jeu</span>
+    </div>
+    <div id="rs-panel-body" style="display:none"></div>
+    <div id="rs-collapsed-tab" class="panel-collapsed-tab">
+      <span class="pct-arrow">◀</span>
+      <span class="pct-label">Compat.</span>
+    </div>
+  </div>
+</div>
+
+<div id="exp-bar">
+  <span id="exp-count"></span>
+  <button class="btn-exp" id="btn-export-list">Exporter la liste</button>
+  <button class="btn-exp" id="btn-trash-marked" style="background:var(--red)">🗑 Corbeille</button>
+  <button class="btn-clr" id="btn-clear-marked">Tout désélectionner</button>
+</div>
+
+<!-- ─── MODAL ÉMULATEURS ──────────────────────────────────────────────────── -->
+<div class="emu-overlay hidden" id="emu-overlay">
+  <div class="emu-modal">
+    <div class="emu-modal-hdr">
+      <h2>🕹 Émulateurs</h2>
+      <button class="zbtn" id="emu-close" title="Fermer">✕</button>
+    </div>
+    <div class="emu-modal-body">
+      <div style="font-size:10px;color:var(--text-dim);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 12px;margin-bottom:10px;line-height:1.7">
+        💡 Compose la ligne de commande avec des tokens ordonnés.<br>
+        <code style="color:var(--accent)">{rom}</code> = shortname du jeu &nbsp;·&nbsp;
+        <code style="color:var(--accent2)">{rompath}</code> = dossier du fichier ROM &nbsp;·&nbsp;
+        Les autres tokens sont des args littéraux (ex. <code style="color:var(--text-mid)">-fs</code>, <code style="color:var(--text-mid)">1</code>).
+      </div>
+      <div class="emu-list" id="emu-list"></div>
+      <div class="emu-add-form">
+        <div class="emu-add-form-row">
+          <div>
+            <label for="emu-name-input">Nom / Version</label>
+            <input class="emu-input" id="emu-name-input" type="text" placeholder="ex: MAME 0.272" autocomplete="off">
+          </div>
+          <div>
+            <label>Exécutable</label>
+            <div class="emu-path-wrap">
+              <input class="emu-input" id="emu-path-input" type="text" placeholder="C:\mame\mame.exe" autocomplete="off">
+              <button class="emu-browse" id="emu-browse">Parcourir</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Ordre des arguments <span style="opacity:.5;font-weight:400">— glisser ↑↓ pour réordonner</span></label>
+          <div class="emu-tokens" id="emu-tokens-list"></div>
+          <div class="emu-token-row" style="margin-top:6px">
+            <input class="emu-input emu-token-input" id="emu-arg-input" type="text" placeholder="arg littéral ex: -fs  ou  1" autocomplete="off">
+            <button class="emu-token-shortcut" id="emu-tok-add-arg" title="Ajouter l'arg saisi">+ Arg</button>
+            <button class="emu-token-shortcut" id="emu-tok-rom"     title="Insérer {rom}">{rom}</button>
+            <button class="emu-token-shortcut" id="emu-tok-rompath" title="Insérer {rompath}" style="color:var(--accent2);border-color:var(--accent2)44">{rompath}</button>
+          </div>
+        </div>
+        <div class="emu-add-form-actions">
+          <button class="emu-add-btn" id="emu-add">＋ Ajouter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MENU CONTEXTUEL ───────────────────────────────────────────────────── -->
+<div class="ctx-menu hidden" id="ctx-menu"></div>
+
+<script>
+// palettes de couleurs
+const FOLDER_COLORS = ['#5b8ef0','#4fc97e','#e8a045','#e85555','#c97be8','#f0c030','#50c8c8','#f080a0'];
+const DAT_COLORS    = ['#815725','#e8a045','#ffe631','#4fc97e','#50b2c8','#5b8ef0','#7b28ff','#c97be8','#f080a0','#e85555'];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  folders:     [], // { id, name, color, files:[] }
+  dats:        [], // { id, label, color, fileName, games: Map }
+  gamePrefs:   {}, // { [shortName]: emuId }
+  groups:      [],
+  groupsById:  new Map(),
+  filtered:    [],
+  filter:      'all',
+  rsFilter:    null,
+  folderFilter:null,
+  sort:        'name',
+  sortReverse: false,
+  search:      '',
+  toDelete:    new Set(),
+  activeId:    null,
+  activeZipPath: null,
+  activeDatId: null,
+  renderLimit: 250,
+  uiPrefs:     {}, // { hideTags: bool }
+};
+
+// ─── INIT LOAD PANELS ────────────────────────────────────────────────────────
+(function initLoadPanels() {
+  // Drop sur le panneau DATs
+  const datPanel = document.getElementById('panel-dats');
+  datPanel.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); datPanel.classList.add('dragover'); });
+  datPanel.addEventListener('dragleave', () => datPanel.classList.remove('dragover'));
+  datPanel.addEventListener('drop', async e => {
+    e.preventDefault(); e.stopPropagation(); datPanel.classList.remove('dragover');
+    for (const f of [...e.dataTransfer.files]) {
+      if (/\.(xml|dat)$/i.test(f.name)) {
+        const filePath = window.electronAPI.getPathForFile(f);
+        const content = await f.text();
+        showLoadingBar(); await tick();
+        loadDatFrom(f.name, content, filePath);
+        if (document.getElementById('scr-app').style.display !== 'flex') hideLoadingBar();
+      }
+    }
+  });
+
+  // Bouton ajouter DAT
+  document.getElementById('btn-add-dat-load').addEventListener('click', () => triggerAddDat());
+})();
+
+// ─── TRIGGERS ────────────────────────────────────────────────────────────────
+async function triggerAddFolder() {
+  const data = await window.electronAPI.selectFolder();
+  if (data) onFolderData(data);
+}
+async function triggerAddDat() {
+  const data = await window.electronAPI.selectDat();
+  if (data) {
+    showLoadingBar(); await tick();
+    loadDatFrom(data.fileName, data.content, data.filePath);
+    if (document.getElementById('scr-app').style.display !== 'flex') hideLoadingBar();
+  }
+}
+
+// ─── FOLDER ───────────────────────────────────────────────────────────────────
+function onFolderData({ folderPath, folderName, files }, noSave = false) {
+  if (!files.length) return;
+  let finalName = folderName, n = 2;
+  while (S.folders.some(fd => fd.name === finalName)) finalName = folderName + ' (' + (n++) + ')';
+  const color = FOLDER_COLORS[S.folders.length % FOLDER_COLORS.length];
+  const id    = 'folder_' + Date.now();
+  const folderFiles = files.map(f => ({
+    name: f.name, nameNoExt: f.nameNoExt, ext: f.ext,
+    size: f.size, sizeStr: fmtSize(f.size),
+    path: f.path, isDupe: false, folderId: id,
+  }));
+  S.folders.push({ id, name: finalName, color, folderPath, files: folderFiles });
+  updateFolderChips();
+  document.getElementById('btn-go').classList.add('vis');
+  if (!noSave) savePaths();
+  if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+}
+
+function removeFolder(id) {
+  S.folders = S.folders.filter(f => f.id !== id);
+  updateFolderChips();
+  const hasActive = S.folders.some(f => !f.disabled);
+  if (!hasActive) document.getElementById('btn-go').classList.remove('vis');
+  savePaths();
+  if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+}
+
+function updateFolderChips() {
+  const container = document.getElementById('folders-items');
+  const emptyEl   = document.getElementById('folders-empty');
+  if (!container) return;
+
+  // Retirer tous les items (garder emptyEl)
+  [...container.querySelectorAll('.lp-item')].forEach(el => el.remove());
+
+  if (S.folders.length === 0) {
+    if (emptyEl) emptyEl.style.display = '';
+  } else {
+    if (emptyEl) emptyEl.style.display = 'none';
+    S.folders.forEach(fd => {
+      const item = document.createElement('div');
+      item.className = 'lp-item' + (fd.disabled ? ' disabled' : '');
+      item.dataset.id = fd.id;
+      item.innerHTML = `
+        <button class="lp-toggle ${fd.disabled ? 'off' : 'on'}" title="${fd.disabled ? 'Activer' : 'Désactiver'}">${fd.disabled ? '' : '✓'}</button>
+        <div class="lp-dot" style="background:${fd.color}"></div>
+        <span class="lp-name" title="${esc(fd.folderPath || fd.name)}">${esc(fd.name)}</span>
+        <span class="lp-count">${fd.files.length}</span>
+        <span class="lp-x" title="Retirer">✕</span>`;
+
+      item.querySelector('.lp-toggle').addEventListener('click', () => {
+        fd.disabled = !fd.disabled;
+        updateFolderChips(); buildFolderFilterRow();
+        savePaths();
+        if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+      });
+      item.querySelector('.lp-x').addEventListener('click', () => removeFolder(fd.id));
+      container.appendChild(item);
+    });
+  }
+
+  // Vérifier si au moins un dossier actif pour activer le bouton GO
+  const hasActive = S.folders.some(f => !f.disabled);
+  if (hasActive) document.getElementById('btn-go').classList.add('vis');
+  else if (!S.folders.length) document.getElementById('btn-go').classList.remove('vis');
+
+  buildFolderFilterRow();
+}
+
+// ─── DAT PANEL : rendu visuels ───────────────────────────────────────────────
+function refreshDatCard() {
+  const container = document.getElementById('dats-items');
+  const emptyEl   = document.getElementById('dats-empty');
+  if (!container) return;
+
+  [...container.querySelectorAll('.lp-item')].forEach(el => el.remove());
+
+  if (S.dats.length === 0) {
+    if (emptyEl) emptyEl.style.display = '';
+  } else {
+    if (emptyEl) emptyEl.style.display = 'none';
+    S.dats.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'lp-item' + (d.disabled ? ' disabled' : '');
+      item.dataset.id = d.id;
+      const gameCount = d.games ? d.games.size : 0;
+      item.innerHTML = `
+        <button class="lp-toggle ${d.disabled ? 'off' : 'on'}" style="${d.disabled ? '' : `color:${d.color};border-color:${d.color};background:${d.color}18`}" title="${d.disabled ? 'Activer' : 'Désactiver'}">${d.disabled ? '' : '✓'}</button>
+        <div class="lp-dot" style="background:${d.color}"></div>
+        <span class="lp-name" style="color:${d.color}" title="${esc(d.label)}">${esc(d.label)}</span>
+        <span class="lp-count">${gameCount}</span>
+        <span class="lp-x" title="Retirer">✕</span>`;
+
+      item.querySelector('.lp-toggle').addEventListener('click', () => {
+        d.disabled = !d.disabled;
+        refreshDatCard(); updateDatBar(); buildRsFilterRow();
+        savePaths();
+        if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+      });
+      item.querySelector('.lp-x').addEventListener('click', ev => {
+        ev.stopPropagation();
+        S.dats = S.dats.filter(x => x.id !== d.id);
+        refreshDatCard(); updateDatBar(); buildRsFilterRow();
+        savePaths();
+        if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+      });
+      container.appendChild(item);
+    });
+  }
+}
+
+function loadDatFrom(fileName, content, filePath = null, noSave = false) {
+  try {
+    const { games } = parseDatXML(content);
+    const id    = 'dat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    const label = fileName.replace(/\.[^.]+$/, '');
+    const color = DAT_COLORS[S.dats.length % DAT_COLORS.length];
+    const entry = { id, label, color, fileName, games, _filePath: filePath };
+    S.dats.push(entry);
+    refreshDatCard();
+    if (S.folders.length > 0) document.getElementById('btn-go').classList.add('vis');
+    updateDatBar();
+    if (!noSave) savePaths();
+    if (document.getElementById('scr-app').style.display === 'flex') buildApp();
+    return entry;
+  } catch(err) { alert('Erreur DAT (' + fileName + ') : ' + err.message); return null; }
+}
+
+function parseDatXML(xmlStr) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('XML invalide');
+  const games = new Map();
+  [...doc.querySelectorAll('machine'), ...doc.querySelectorAll('game')].forEach(m => {
+    const name = m.getAttribute('name'); if (!name) return;
+    const cloneof = m.getAttribute('cloneof') || null;
+    const desc = m.querySelector('description')?.textContent?.trim() || name;
+    const year = m.querySelector('year')?.textContent?.trim() || '';
+    const mfr  = m.querySelector('manufacturer')?.textContent?.trim() || '';
+    const roms=[...m.querySelectorAll('rom')].map(r=>({
+      romName:r.getAttribute('name')||'',
+      size:parseInt(r.getAttribute('size')||'0'),
+      crc:r.getAttribute('crc')||'',
+      merge:r.getAttribute('merge')||null,
+      status:r.getAttribute('status')||null,
+    }));
+    games.set(name, { name, desc, year, mfr, cloneof, clones:[], roms });
+  });
+  games.forEach(g => { if (g.cloneof && games.has(g.cloneof)) games.get(g.cloneof).clones.push(g.name); });
+  return { games };
+}
+
+function updateDatBar() {
+  const bar = document.getElementById('dat-bar');
+  if (bar) bar.classList.remove('vis');
+  buildRsFilterRow();
+}
+
+// ─── BUILD APP ───────────────────────────────────────────────────────────────
+const tick = (ms=30) => new Promise(r => setTimeout(r, ms));
+
+function showLoadingBar() { document.getElementById('hdr-loading-bar').classList.add('vis'); }
+function hideLoadingBar() { document.getElementById('hdr-loading-bar').classList.remove('vis'); }
+
+async function buildApp() {
+  const inApp = document.getElementById('scr-app').style.display === 'flex';
+
+  if (inApp) {
+    showLoadingBar();
+    await tick();
+  } else {
+    setScreen('prog'); prog(0, 'Analyse des fichiers...');
+  }
+
+  await tick(); detectDupes();
+  if (!inApp) prog(25, 'Construction des groupes...');
+  await tick(); buildGroups();
+  if (!inApp) prog(65, 'Indexation...');
+  await tick();
+  const hasDat = getActiveDats().length > 0;
+  ['fb-parents','fb-clones','fb-orphans','fb-missing'].forEach(id =>
+    document.getElementById(id).disabled = !hasDat);
+  document.getElementById('fb-multi').disabled = getActiveDats().length < 2;
+  updateStats(); S.renderLimit=250; S.activeId=null; _activeItemEl=null;
+  applyFilterSort();
+
+  if (!inApp) {
+    prog(100, 'Prêt !');
+    await tick(300);
+    setScreen('app');
+  }
+
+  document.getElementById('det-hdr').style.display='none';
+  document.getElementById('det-body').style.display='none';
+  document.getElementById('empty-msg').style.display='flex';
+  document.getElementById('rs-panel-empty').style.display='flex';
+  document.getElementById('rs-panel-body').style.display='none';
+  document.getElementById('zip-panel-empty').innerHTML='<span>← Sélectionne<br>un jeu</span>';
+  document.getElementById('zip-panel-empty').style.display='flex';
+  document.getElementById('zip-panel-body').style.display='none';
+  document.getElementById('zip-panel-name').textContent='';
+  updateDatBar(); buildFolderFilterRow();
+  savePaths();
+
+  if (inApp) hideLoadingBar();
+}
+
+function getAllRomFiles() {
+  return S.folders.filter(fd => !fd.disabled).flatMap(fd => fd.files);
+}
+
+function getActiveDats() {
+  return S.dats.filter(d => !d.disabled);
+}
+
+function detectDupes() {
+  const all = getAllRomFiles();
+  const cnt = new Map();
+  all.forEach(f => cnt.set(f.nameNoExt, (cnt.get(f.nameNoExt)||0)+1));
+  all.forEach(f => { f.isDupe = cnt.get(f.nameNoExt) > 1; });
+}
+
+function getRomsetMatches(nameNoExt) {
+  return getActiveDats().flatMap(d => {
+    const g = d.games.get(nameNoExt);
+    return g ? [{ dat:d, game:g, role:g.cloneof?'clone':'parent' }] : [];
+  });
+}
+
+function buildGroups() {
+  const groups = new Map();
+  const all = getAllRomFiles();
+  const activeDats = getActiveDats();
+
+  // fileMap global : nameNoExt -> files[]
+  const fileMap = new Map();
+  all.forEach(f => {
+    if (!fileMap.has(f.nameNoExt)) fileMap.set(f.nameNoExt, []);
+    fileMap.get(f.nameNoExt).push(f);
+  });
+
+  if (activeDats.length > 0) {
+    const allNames = new Set();
+    activeDats.forEach(d => d.games.forEach((_, nm) => allNames.add(nm)));
+
+    const isParentInAnyDat = nm => activeDats.some(d => { const g=d.games.get(nm); return g && !g.cloneof; });
+    const getParentOf = nm => { for(const d of activeDats){ const g=d.games.get(nm); if(g&&g.cloneof) return g.cloneof; } return null; };
+
+    allNames.forEach(nm => {
+      if (!isParentInAnyDat(nm)) return;
+      const files = fileMap.get(nm) || [];
+      const cloneNames = new Set();
+      activeDats.forEach(d => { const g=d.games.get(nm); if(g) g.clones.forEach(c=>cloneNames.add(c)); });
+      let desc=nm, year='', mfr='';
+      for(const d of activeDats){ const g=d.games.get(nm); if(g&&g.desc!==nm){desc=g.desc;year=g.year;mfr=g.mfr;break;} }
+      const rsMatches = getRomsetMatches(nm);
+      const cloneEntries = [...cloneNames].map(cn => {
+        let cdesc=cn, cyear='';
+        for(const d of activeDats){ const g=d.games.get(cn); if(g&&g.desc!==cn){cdesc=g.desc;cyear=g.year;break;} }
+        return { shortName:cn, desc:cdesc, year:cyear, files:fileMap.get(cn)||[], rsMatches:getRomsetMatches(cn) };
+      });
+      const allFiles = [...files, ...cloneEntries.flatMap(c=>c.files)];
+      groups.set(nm, {
+        id:nm, shortName:nm, desc, year, mfr, isOrphan:false, files,
+        clones:cloneEntries, hasInCollection:files.length>0,
+        totalFiles:allFiles.length, totalSize:allFiles.reduce((s,f)=>s+f.size,0),
+        rsMatches, rsCount:rsMatches.length,
+      });
+    });
+
+    // clones sans parent dans les DATs
+    allNames.forEach(nm => {
+      if (isParentInAnyDat(nm)||groups.has(nm)) return;
+      const parentNm = getParentOf(nm);
+      if (parentNm && groups.has(parentNm)) return;
+      const files = fileMap.get(nm)||[];
+      let desc=nm, year='', mfr='';
+      for(const d of activeDats){ const g=d.games.get(nm); if(g&&g.desc!==nm){desc=g.desc;year=g.year;mfr=g.mfr;break;} }
+      const rsMatches=getRomsetMatches(nm);
+      groups.set(nm,{ id:nm, shortName:nm, desc, year, mfr, isOrphan:false, files, clones:[], hasInCollection:files.length>0, totalFiles:files.length, totalSize:files.reduce((s,f)=>s+f.size,0), rsMatches, rsCount:rsMatches.length });
+    });
+
+    // orphelins (absents de tous les DATs)
+    all.forEach(f => {
+      if (activeDats.some(d=>d.games.has(f.nameNoExt))) return;
+      const gid='\x00orph\x00'+f.nameNoExt;
+      if (!groups.has(gid)) groups.set(gid,{ id:gid, shortName:f.nameNoExt, desc:null, year:'', mfr:'', isOrphan:true, files:[], clones:[], hasInCollection:true, totalFiles:0, totalSize:0, rsMatches:[], rsCount:0 });
+      const g=groups.get(gid); g.files.push(f); g.totalFiles++; g.totalSize+=f.size;
+    });
+
+  } else {
+    // sans DAT : heuristique préfixe
+    const sorted=[...all].sort((a,b)=>{ const dl=a.nameNoExt.length-b.nameNoExt.length; return dl!==0?dl:a.nameNoExt.localeCompare(b.nameNoExt); });
+    const parentNames=[];
+    sorted.forEach(f=>{
+      const nm=f.nameNoExt; let best=null, bestLen=0;
+      parentNames.forEach(p=>{ if(nm.startsWith(p)&&p.length>bestLen&&nm.length-p.length<=2){bestLen=p.length;best=p;} });
+      if(best){ const g=groups.get(best); g.clones.push({shortName:nm,desc:null,files:[f],rsMatches:[]}); g.totalFiles++; g.totalSize+=f.size; }
+      else { parentNames.push(nm); groups.set(nm,{id:nm,shortName:nm,desc:null,year:'',mfr:'',isOrphan:false,files:[f],clones:[],hasInCollection:true,totalFiles:1,totalSize:f.size,rsMatches:[],rsCount:0}); }
+    });
+  }
+
+  S.groups = [...groups.values()];
+  S.groupsById = new Map(S.groups.map(g => [g.id, g]));
+}
+
+// ─── FILTER ROWS ─────────────────────────────────────────────────────────────
+function buildRsFilterRow() {
+  const row = document.getElementById('rs-filter-row');
+  const activeDats = getActiveDats();
+  if (!activeDats.length) { row.style.display='none'; row.innerHTML=''; return; }
+  row.style.display='flex';
+  row.innerHTML='<span style="font-size:9px;color:var(--text-dim);align-self:center;white-space:nowrap">DAT:</span>';
+  const all=document.createElement('button'); all.className='fbtn'+(S.rsFilter===null?' on':'');
+  all.style.borderRadius='10px'; all.textContent='Tous';
+  all.addEventListener('click',()=>{ S.rsFilter=null; buildRsFilterRow(); S.renderLimit=250; applyFilterSort(); }); row.appendChild(all);
+  activeDats.forEach(d=>{
+    const grp=document.createElement('span'); grp.className='fbtn-group';
+    grp.style.setProperty('--rs-color',d.color);
+
+    const btn=document.createElement('button');
+    btn.className='fbtn fbtn-rs'+(S.rsFilter===d.id?' on':'');
+    btn.style.setProperty('--rs-color',d.color);
+    btn.innerHTML=`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${d.color};margin-right:4px"></span>${esc(d.label)}`;
+    btn.addEventListener('click',()=>{ S.rsFilter=d.id; buildRsFilterRow(); S.renderLimit=250; applyFilterSort(); });
+
+    const x=document.createElement('button'); x.className='fbtn-grp-x'; x.textContent='✕';
+    x.title='Retirer ce DAT';
+    x.addEventListener('click',()=>{
+      S.dats=S.dats.filter(dd=>dd.id!==d.id);
+      if(S.rsFilter===d.id) S.rsFilter=null;
+      refreshDatCard(); updateDatBar(); buildRsFilterRow();
+      if(document.getElementById('scr-app').style.display==='flex') buildApp();
+    });
+
+    grp.appendChild(btn); grp.appendChild(x); row.appendChild(grp);
+  });
+}
+
+function buildFolderFilterRow() {
+  const row = document.getElementById('folder-filter-row');
+  if (S.folders.length <= 1) { row.style.display='none'; row.innerHTML=''; return; }
+  row.style.display='flex';
+  row.innerHTML='<span style="font-size:9px;color:var(--text-dim);align-self:center;white-space:nowrap">Dossier:</span>';
+  const all=document.createElement('button'); all.className='fbtn'+(S.folderFilter===null?' on':''); all.textContent='Tous';
+  all.addEventListener('click',()=>{ S.folderFilter=null; buildFolderFilterRow(); S.renderLimit=250; applyFilterSort(); }); row.appendChild(all);
+  S.folders.forEach(fd=>{
+    const grp=document.createElement('span'); grp.className='fbtn-group fbtn-group-folder';
+    grp.style.setProperty('--rs-color',fd.color);
+
+    const btn=document.createElement('button');
+    btn.className='fbtn fbtn-rs'+(S.folderFilter===fd.id?' on':'');
+    btn.style.setProperty('--rs-color',fd.color);
+    btn.innerHTML=`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${fd.color};margin-right:4px"></span>${esc(fd.name)}`;
+    btn.addEventListener('click',()=>{ S.folderFilter=fd.id; buildFolderFilterRow(); S.renderLimit=250; applyFilterSort(); });
+
+    const x=document.createElement('button'); x.className='fbtn-grp-x'; x.textContent='✕';
+    x.title='Retirer ce dossier';
+    x.addEventListener('click',()=>{ removeFolder(fd.id); });
+
+    grp.appendChild(btn); grp.appendChild(x); row.appendChild(grp);
+  });
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function updateStats() {
+  const all=getAllRomFiles();
+  const activeDats=getActiveDats();
+  const total=all.length, totalSz=all.reduce((s,f)=>s+f.size,0);
+  const dupes=all.filter(f=>f.isDupe).length;
+  const activeFolders=S.folders.filter(f=>!f.disabled);
+  let txt=`${total.toLocaleString()} ROMs · ${fmtSize(totalSz)}`;
+  if(activeFolders.length>1) txt+=` · ${activeFolders.length} dossiers`;
+  if(dupes>0) txt+=` · ⚠ ${dupes} doublons`;
+  if(activeDats.length>0){
+    const allDatNames=new Set(); activeDats.forEach(d=>d.games.forEach((_,k)=>allDatNames.add(k)));
+    const matched=all.filter(f=>allDatNames.has(f.nameNoExt)).length;
+    const orphans=total-matched;
+    txt+=` · ${matched}/${total} matchés · ${activeDats.length} DAT${activeDats.length>1?'s':''}`;
+    if(orphans>0) txt+=` · ${orphans} orphelins`;
+  }
+  document.getElementById('stats').textContent=txt;
+}
+
+// ─── FILTER + SORT ───────────────────────────────────────────────────────────
+function applyFilterSort() {
+  let list=[...S.groups];
+
+  if(S.rsFilter!==null)
+    list=list.filter(g=>g.rsMatches.some(m=>m.dat.id===S.rsFilter));
+
+  if(S.folderFilter!==null)
+    list=list.filter(g=>g.files.some(f=>f.folderId===S.folderFilter)||g.clones.some(c=>c.files.some(f=>f.folderId===S.folderFilter)));
+
+  const activeDats=getActiveDats();
+  switch(S.filter){
+    case 'parents': list=list.filter(g=>!g.isOrphan&&g.clones.length>0); break;
+    case 'clones':  list=list.filter(g=>!g.isOrphan&&activeDats.some(d=>{const gd=d.games.get(g.shortName);return gd&&gd.cloneof;})); break;
+    case 'orphans': list=list.filter(g=>g.isOrphan); break;
+    case 'missing': list=list.filter(g=>!g.isOrphan&&!g.hasInCollection); break;
+    case 'dupes':   list=list.filter(g=>g.files.some(f=>f.isDupe)||g.files.length>1||g.clones.some(c=>c.files.length>1)); break;
+    case 'multi':   list=list.filter(g=>g.rsCount>=2); break;
+  }
+
+  if(S.search){
+    const ql=S.search.toLowerCase();
+    list=list.filter(g=>g.shortName.toLowerCase().includes(ql)||(g.desc&&g.desc.toLowerCase().includes(ql))||(g.mfr&&g.mfr.toLowerCase().includes(ql)));
+  }
+
+  switch(S.sort){
+    case 'name':     list.sort((a,b)=>a.shortName.localeCompare(b.shortName)); break;
+    case 'desc':     list.sort((a,b)=>(a.desc||a.shortName).localeCompare(b.desc||b.shortName)); break;
+    case 'clones':   list.sort((a,b)=>b.clones.length-a.clones.length); break;
+    case 'size':     list.sort((a,b)=>b.totalSize-a.totalSize); break;
+    case 'rs-count': list.sort((a,b)=>b.rsCount-a.rsCount); break;
+  }
+  if(S.sortReverse) list.reverse();
+
+  S.filtered=list; renderList();
+}
+
+// ─── RENDER LIST ─────────────────────────────────────────────────────────────
+function renderList(){
+  const container=document.getElementById('rom-list');
+  const countEl=document.getElementById('list-count');
+  const total=S.filtered.length, shown=Math.min(total,S.renderLimit);
+  countEl.textContent=S.search?`${total} résultat${total!==1?'s':''} sur ${S.groups.length}`:`${total} jeu${total!==1?'x':''}`;
+  container.innerHTML='';
+  const frag=document.createDocumentFragment();
+
+  S.filtered.slice(0,shown).forEach(g=>{
+    const div=document.createElement('div');
+    div.className='ritem'+(g.id===S.activeId?' active':'');
+    div.dataset.id=g.id;
+
+    const badges=[];
+    if(S.dats.length>0){
+      if(g.isOrphan)              badges.push(`<span class="bdg bdg-orph">orphelin</span>`);
+      else if(!g.hasInCollection) badges.push(`<span class="bdg bdg-miss">manquant</span>`);
+      else                        badges.push(`<span class="bdg bdg-ok">✓</span>`);
+    }
+    if(g.clones.length>0) badges.push(`<span class="bdg bdg-n">+${g.clones.length}</span>`);
+    if(g.files.some(f=>f.isDupe)||g.files.length>1) badges.push(`<span class="bdg bdg-dupe">dupe</span>`);
+    if(g.rsCount>=2) badges.push(`<span class="bdg bdg-multi">${g.rsCount}✦</span>`);
+
+    const nHl=S.search?highlight(esc(g.shortName),S.search):esc(g.shortName);
+    const dHl=g.desc?(S.search?highlight(esc(g.desc),S.search):esc(g.desc)):'';
+
+    const rsTags=g.rsMatches.map(m=>`<span class="rs-tag" style="background:${m.dat.color}20;color:${m.dat.color};border:1px solid ${m.dat.color}40">${m.dat.label}</span>`).join('');
+
+    // tags dossiers (si plusieurs dossiers)
+    let foldTags='';
+    if(S.folders.length>1){
+      const foldIds=new Set(g.files.map(f=>f.folderId));
+      g.clones.forEach(c=>c.files.forEach(f=>foldIds.add(f.folderId)));
+      foldTags=[...foldIds].map(fid=>{
+        const fd=S.folders.find(x=>x.id===fid);
+        return fd?`<span class="fold-tag" style="background:${fd.color}20;color:${fd.color};border:1px solid ${fd.color}40">${esc(fd.name)}</span>`:'';
+      }).join('');
+    }
+
+    div.innerHTML=`
+      <div class="ri-r1"><span class="ri-name">${nHl}</span>${badges.join('')}</div>
+      ${dHl?`<div class="ri-desc">${dHl}</div>`:''}
+      <div class="ri-r2">
+        ${g.year?`<span>${g.year}</span>`:''}
+        ${g.mfr?`<span>${esc(g.mfr)}</span>`:''}
+        ${g.totalSize?`<span>${fmtSize(g.totalSize)}</span>`:''}
+      </div>
+      ${!S.uiPrefs.hideTags && rsTags?`<div class="ri-rs">${rsTags}</div>`:''}
+      ${!S.uiPrefs.hideTags && foldTags?`<div class="ri-fold">${foldTags}</div>`:''}
+    `;
+    div.addEventListener('click', () => openGroup(g.id));
+    div.addEventListener('dblclick', async () => {
+      const grp = S.groupsById.get(g.id);
+      if (!grp || !S.emulators.length) return;
+      const prefId = S.gamePrefs[g.shortName] || S.emulators[0]?.id;
+      const emu = S.emulators.find(e => e.id === prefId) || S.emulators[0];
+      if (!emu) return;
+      const favPath = S.gamePrefs[g.shortName + '__fav'];
+      const allFiles = [...grp.files, ...grp.clones.flatMap(c=>c.files)];
+      const file = (favPath && allFiles.find(f => f.path === favPath)) || allFiles[0];
+      if (!file) return;
+      const romDir = file.path ? file.path.replace(/[\/\\][^\/\\]+$/, '') : '';
+      const r = await window.electronAPI.launchEmulator({ exePath: emu.exePath, resolvedArgs: buildArgs(emu, file.nameNoExt, romDir) });
+      if (!r.ok) alert('Erreur lancement :\n' + r.error);
+    });
+    frag.appendChild(div);
+  });
+
+  if(total>shown){
+    const more=document.createElement('div');
+    more.className='load-more';
+    more.textContent=`Afficher ${Math.min(250,total-shown)} de plus… (${total-shown} restants)`;
+    more.addEventListener('click',()=>{ S.renderLimit+=250; renderList(); });
+    frag.appendChild(more);
+  }
+  container.appendChild(frag);
+}
+
+// ─── BUILD ARGS ──────────────────────────────────────────────────────────────
+function buildArgs(emu, romName, romDir) {
+  const tokens = emu.cmdArgs && emu.cmdArgs.length ? emu.cmdArgs : ['{rom}'];
+  return tokens.map(t => {
+    if (t === '{rom}')     return romName  || '';
+    if (t === '{rompath}') return romDir   || '';
+    return t;
+  }).filter(Boolean);
+}
+
+// ─── HELPERS SECTIONS COLLAPSABLES ──────────────────────────────────────────
+function makeSec(title, collapseKey) {
+  const sec = document.createElement('div');
+  const _c = (window._secCollapsed = window._secCollapsed||{});
+  const collapsed = _c[collapseKey] || false;
+  sec.innerHTML = `<div class="sec-title sec-collapsable" data-key="${collapseKey}">
+    <span class="sec-arr">${collapsed ? '▶' : '▼'}</span> ${title}</div>`;
+  const inner = document.createElement('div');
+  inner.className = 'sec-inner';
+  if (collapsed) inner.style.display = 'none';
+  sec.appendChild(inner);
+  sec.querySelector('.sec-collapsable').addEventListener('click', () => {
+    const nowCollapsed = inner.style.display !== 'none';
+    inner.style.display = nowCollapsed ? 'none' : '';
+    sec.querySelector('.sec-arr').textContent = nowCollapsed ? '▶' : '▼';
+    _c[collapseKey] = nowCollapsed;
+  });
+  return { sec, inner };
+}
+
+// ─── OPEN GROUP ──────────────────────────────────────────────────────────────
+let _activeItemEl = null;
+
+function openGroup(id){
+  const prevId = S.activeId;
+  S.activeId=id;
+  if (prevId !== id) S.activeZipPath = null;
+  const g=S.groupsById.get(id); if(!g) return;
+  if (window.updateSnapPanel) window.updateSnapPanel(g.shortName);
+
+  if (_activeItemEl) _activeItemEl.classList.remove('active');
+  _activeItemEl = document.querySelector(`.ritem[data-id="${CSS.escape(id)}"]`);
+  if (_activeItemEl) _activeItemEl.classList.add('active');
+  document.getElementById('empty-msg').style.display='none';
+
+  // Header
+  document.getElementById('det-hdr').style.display='block';
+  document.getElementById('det-title').textContent=g.desc||g.shortName;
+  const meta=[];
+  if(g.desc&&g.shortName!==g.desc) meta.push(`<span>🔑 ${g.shortName}</span>`);
+  if(g.year) meta.push(`<span>📅 ${g.year}</span>`);
+  if(g.mfr)  meta.push(`<span>🏭 ${esc(g.mfr)}</span>`);
+  if(g.isOrphan) meta.push(`<span style="color:var(--red)">⚠ Absent de tous les DATs</span>`);
+  document.getElementById('det-meta').innerHTML=meta.join('');
+
+  // Sélecteur émulateur préféré
+  (function renderEmuSelect() {
+    const hdr = document.getElementById('det-hdr');
+    let sel = document.getElementById('det-emu-sel');
+    if (!sel) {
+      sel = document.createElement('select');
+      sel.id = 'det-emu-sel';
+      sel.style.cssText = 'margin-left:auto;background:var(--bg3);border:1px solid var(--border);color:var(--text-mid);font-family:JetBrains Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;outline:none;cursor:pointer;flex-shrink:0;';
+      hdr.appendChild(sel);
+    }
+    sel.innerHTML = '';
+    if (!S.emulators.length) {
+      const opt = document.createElement('option'); opt.textContent = 'Aucun émulateur'; sel.appendChild(opt);
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+      const prefId = S.gamePrefs[g.shortName] || S.emulators[0]?.id;
+      S.emulators.forEach(emu => {
+        const opt = document.createElement('option');
+        opt.value = emu.id; opt.textContent = emu.name;
+        if (emu.id === prefId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = async () => {
+        S.gamePrefs[g.shortName] = sel.value;
+        await saveGamePrefs();
+      };
+    }
+  })();
+
+  // Body
+  const body=document.getElementById('det-body');
+  body.style.display='flex'; body.innerHTML='';
+
+  // alertes
+  if(g.isOrphan)
+    body.appendChild(makeAlert('al-err','❌ Absent de tous les DATs chargés.'));
+  if(S.dats.length>0&&!g.isOrphan&&!g.hasInCollection)
+    body.appendChild(makeAlert('al-info','ℹ Vous n\'avez pas le fichier parent de ce jeu.'));
+
+  // Fichiers
+  const ownFiles=[
+    ...g.files.map(f=>({...f,role:'parent',cloneShort:null})),
+    ...g.clones.flatMap(c=>c.files.map(f=>({...f,role:'clone',cloneShort:c.shortName}))),
+  ];
+
+  if(ownFiles.length>0){
+    const sec=document.createElement('div');
+    const tbl=document.createElement('table'); tbl.className='rtbl';
+    const showFolderCol = S.folders.length > 1;
+    tbl.innerHTML=`<thead><tr><th class="col-fav" title="Favori">🌟</th><th>Fichier</th><th>Rôle</th>${showFolderCol?'<th>Dossier</th>':''}<th>Taille</th><th>Chemin</th><th></th></tr></thead>`;
+    const tbody=document.createElement('tbody');
+    ownFiles.forEach(f=>{
+      const tr=document.createElement('tr');
+      if(S.toDelete.has(f.path)) tr.classList.add('del-row');
+      const roleBadge=f.role==='parent'?`<span class="bdg bdg-ok">parent</span>`:`<span class="bdg bdg-clone">clone</span>`;
+      const dupeBadge=f.isDupe?` <span class="bdg bdg-dupe">dupe</span>`:'';
+      const isMarked=S.toDelete.has(f.path);
+      const pathParts=f.path.split(/[/\\]/);
+      const pathShort=pathParts.length>1?pathParts.slice(0,-1).join('/'):'';
+      const fd=S.folders.find(x=>x.id===f.folderId);
+      const folderCell=showFolderCol&&fd?`<td><span class="fold-tag" style="background:${fd.color}20;color:${fd.color};border:1px solid ${fd.color}40">${esc(fd.name)}</span></td>`:(showFolderCol?'<td></td>':'');
+      const isFav = (S.gamePrefs[g.shortName + '__fav'] === f.path);
+      tr.innerHTML=`
+        <td class="col-fav"><input type="checkbox" data-fav="${esc(f.path)}" ${isFav ? 'checked' : ''}></td>
+        <td class="col-fn">${esc(f.name)}${dupeBadge}</td>
+        <td>${roleBadge}${f.cloneShort?` <span style="color:var(--text-dim);font-size:10px">${esc(f.cloneShort)}</span>`:''}</td>
+        ${folderCell}
+        <td class="col-sz">${f.sizeStr}</td>
+        <td class="col-path" data-reveal-path="${esc(f.path)}" title="Double-clic : révéler dans l'explorateur&#10;${esc(f.path)}">${esc(pathShort)}</td>
+        <td class="col-act">
+          <button class="del-btn ${isMarked?'undo':''}" data-path="${esc(f.path)}">${isMarked?'↩':'✕'}</button>
+          <button class="open-btn" data-open="${esc(f.path)}" title="Ouvrir">↗</button>
+        </td>
+      `;
+
+		tr.querySelector('[data-fav]').addEventListener('change', async ev => {
+		  if (ev.target.checked) {
+			S.gamePrefs[g.shortName + '__fav'] = f.path;
+		  } else {
+			delete S.gamePrefs[g.shortName + '__fav'];
+		  }
+		  await saveGamePrefs();
+		  // Décocher les autres lignes du même groupe
+		  tbody.querySelectorAll('[data-fav]').forEach(cb => {
+			if (cb !== ev.target) cb.checked = false;
+		  });
+		});
+		tr.querySelector('.col-fn').style.cursor = 'pointer';
+		tr.querySelector('.col-fn').addEventListener('dblclick', async () => {
+		  const prefId = S.gamePrefs[g.shortName] || S.emulators[0]?.id;
+		  const emu = S.emulators.find(e => e.id === prefId) || S.emulators[0];
+		  if (!emu) return;
+		  const romDir = f.path ? f.path.replace(/[\/\\][^\/\\]+$/, '') : '';
+		  const r = await window.electronAPI.launchEmulator({ exePath: emu.exePath, resolvedArgs: buildArgs(emu, f.nameNoExt, romDir) });
+		  if (!r.ok) alert('Erreur lancement :\n' + r.error);
+		});
+      tr.dataset.zipPath = f.path;
+      if (f.ext === 'zip') tr.dataset.isZip = 'true';
+      tr.querySelector('[data-path]').addEventListener('click', e => { e.stopPropagation(); toggleDelete(e.currentTarget.dataset.path); });
+      tr.querySelector('[data-open]').addEventListener('click',e=>window.electronAPI.openFile(e.currentTarget.dataset.open));
+      tr.querySelector('[data-reveal-path]').addEventListener('dblclick',e=>{ e.stopPropagation(); window.electronAPI.revealFile(e.currentTarget.dataset.revealPath); });
+      tr.addEventListener('contextmenu', e => showCtxMenu(e, f));
+      tr.addEventListener('click', e => {
+        if (e.target.closest('button') || e.target.closest('.col-path') || e.target.closest('.col-fav')) return;
+        tbody.querySelectorAll('tr').forEach(r => r.classList.remove('zip-sel-row'));
+        tr.classList.add('zip-sel-row');
+        S.activeZipPath = f.path;
+        updateZipPanel(g);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    // Auto-highlight active ZIP selection
+    if (!S.activeZipPath) {
+      const firstZipRow = tbody.querySelector('tr[data-is-zip]');
+      if (firstZipRow) { S.activeZipPath = firstZipRow.dataset.zipPath; firstZipRow.classList.add('zip-sel-row'); }
+    } else {
+      tbody.querySelector(`tr[data-zip-path="${CSS.escape(S.activeZipPath)}"]`)?.classList.add('zip-sel-row');
+    }
+    const {sec: secF, inner: innerF} = makeSec(`Fichiers (${ownFiles.length})`, 'sec-files');
+    innerF.appendChild(tbl); body.appendChild(secF);
+  } else if(!g.isOrphan){
+    body.appendChild(makeAlert('al-info','ℹ Aucun fichier pour ce jeu.'));
+  }
+
+  if (getActiveDats().length>0&&g.clones.length>0){
+    const present=g.clones.filter(c=>c.files.length>0);
+    const missing=g.clones.filter(c=>c.files.length===0);
+    if(present.length>0){
+      const {sec, inner: secInner} = makeSec(`Clones présents (${present.length})`, 'sec-clones-ok');
+      present.slice(0,50).forEach(c=>{
+        const d=document.createElement('div'); d.className='clone-item';
+        const rsTags=c.rsMatches.map(m=>`<span class="rs-tag" style="background:${m.dat.color}20;color:${m.dat.color};border:1px solid ${m.dat.color}40">${m.dat.label}</span>`).join('');
+        d.innerHTML=`<span class="bdg bdg-ok">✓</span><span class="ci-name">${esc(c.shortName)}</span><span class="ci-desc">${esc(c.desc||'')}</span>${c.year?`<span style="color:var(--text-dim);font-size:10px;white-space:nowrap">${c.year}</span>`:''}<span style="display:flex;gap:3px">${rsTags}</span>`;
+        secInner.appendChild(d);
+      });
+      if(present.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… et ${present.length-50} autres`; secInner.appendChild(m); }
+      body.appendChild(sec);
+    }
+    if(missing.length>0){
+      const {sec, inner: secInner} = makeSec(`Clones manquants (${missing.length})`, 'sec-clones-miss');
+      missing.slice(0,50).forEach(c=>{
+        const d=document.createElement('div'); d.className='clone-item';
+        const rsTags=c.rsMatches.map(m=>`<span class="rs-tag" style="background:${m.dat.color}20;color:${m.dat.color};border:1px solid ${m.dat.color}40">${m.dat.label}</span>`).join('');
+        d.innerHTML=`<span class="bdg bdg-miss">absent</span><span class="ci-name">${esc(c.shortName)}</span><span class="ci-desc">${esc(c.desc||'')}</span>${c.year?`<span style="color:var(--text-dim);font-size:10px;white-space:nowrap">${c.year}</span>`:''}<span style="display:flex;gap:3px">${rsTags}</span>`;
+        secInner.appendChild(d);
+      });
+      if(missing.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… et ${missing.length-50} autres`; secInner.appendChild(m); }
+      body.appendChild(sec);
+    }
+  }
+
+  // Panneau romset
+  updateRsPanel(g);
+  // Panneau contenu ZIP
+  updateZipPanel(g);
+  updateExportBar();
+}
+
+// ─── PANNEAU ROMSET ──────────────────────────────────────────────────────────
+function updateRsPanel(g) {
+  const panelEmpty = document.getElementById('rs-panel-empty');
+  const panelBody  = document.getElementById('rs-panel-body');
+  const panelName  = document.getElementById('rs-panel-name');
+  panelName.textContent = g.shortName;
+  const activeDats = getActiveDats();
+
+  if (activeDats.length === 0) {
+    panelEmpty.innerHTML='<span>Charge des DATs<br>pour voir le détail</span>';
+    panelEmpty.style.display='flex'; panelBody.style.display='none'; return;
+  }
+  // Choisir le DAT actif par défaut : premier DAT où le jeu est présent
+  const presentDats = activeDats.filter(d => d.games.has(g.shortName));
+  if (!S.activeDatId || !presentDats.find(d=>d.id===S.activeDatId)) {
+    S.activeDatId = presentDats[0]?.id || null;
+  }
+
+  panelEmpty.style.display='none'; panelBody.style.display='block';
+  panelBody.innerHTML='';
+
+  // ── Contenu du DAT actif ──────────────────────────────────────────────────
+  const activeDat = activeDats.find(d=>d.id===S.activeDatId);
+  if (activeDat) {
+    renderRsPanelDat(panelBody, g, activeDat);
+  } else {
+    const abs=document.createElement('div'); abs.className='rsp-absent';
+    abs.innerHTML='<span style="color:var(--text-dim)">Absent de tous les romsets</span>';
+    panelBody.appendChild(abs);
+  }
+}
+
+let _rsPanelRomSort = true; // true = A→Z (défaut)
+let _rsCompatCollapsed = false;
+
+function renderRsPanelDat(container, g, dat) {
+  const gd = dat.games.get(g.shortName);
+  if (!gd) return;
+
+  // Métadonnées
+  const metaSec=document.createElement('div'); metaSec.className='rsp-section';
+  const rows=[];
+  <!-- if (gd.desc && gd.desc!==gd.name) rows.push(['Titre',gd.desc]); -->
+  <!-- if (gd.year) rows.push(['Année',gd.year]); -->
+  <!-- if (gd.mfr)  rows.push(['Fabricant',gd.mfr]); -->
+  if (gd.cloneof) rows.push(['Clone de',gd.cloneof]);
+  if (gd.clones?.length) rows.push(['Variantes',gd.clones.length]);
+  const romTotalSz=gd.roms?gd.roms.reduce((s,r)=>s+r.size,0):0;
+  if (romTotalSz) rows.push(['Taille DAT',fmtSize(romTotalSz)]);
+  let mh=`<div class="rsp-meta">`;
+  rows.forEach(([k,v])=>{ mh+=`<span class="rsp-meta-k">${k}</span><span class="rsp-meta-v">${esc(String(v))}</span>`; });
+  mh+=`</div>`;
+  metaSec.innerHTML=mh; container.appendChild(metaSec);
+
+  if (!gd.roms || !gd.roms.length) return;
+
+  const ownRoms=gd.roms.filter(r=>!r.merge);
+  const mergedRoms=gd.roms.filter(r=>r.merge);
+
+  const romSec=document.createElement('div'); romSec.className='rsp-section';
+  const hdr=document.createElement('div'); hdr.className='rsp-sec-hdr';
+
+  // toggle sort ROM
+  const sortBtn=document.createElement('button');
+  sortBtn.title='Trier alphabétiquement';
+  sortBtn.style.cssText='background:none;border:1px solid var(--border);color:var(--text-dim);font-family:JetBrains Mono,monospace;font-size:9px;padding:1px 5px;border-radius:3px;cursor:pointer;transition:all 0.15s;flex-shrink:0;';
+  function updateSortBtn(){ sortBtn.textContent = _rsPanelRomSort ? 'A→Z ▲' : 'A→Z ▼'; sortBtn.style.color=_rsPanelRomSort?'var(--accent)':'var(--text-dim)'; sortBtn.style.borderColor=_rsPanelRomSort?'var(--accent)':'var(--border)'; }
+  updateSortBtn();
+
+  hdr.style.cssText+='display:flex;align-items:center;justify-content:space-between;gap:6px;';
+  const hdrLeft=document.createElement('span'); hdrLeft.textContent=`ROMs (${gd.roms.length})`;
+  const hdrRight=document.createElement('span'); hdrRight.style.cssText='display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text-dim);';
+  hdrRight.innerHTML=`<span>${ownRoms.length} propres · ${mergedRoms.length} héritées</span>`;
+  hdrRight.appendChild(sortBtn);
+  hdr.appendChild(hdrLeft); hdr.appendChild(hdrRight);
+
+  let vis=true;
+  const body=document.createElement('div'); body.className='rsp-sec-body';
+
+  function buildRomList() {
+    body.innerHTML='';
+    const wrap=document.createElement('div'); wrap.className='rom-list-wrap';
+    let all=[...ownRoms,...mergedRoms];
+    if(_rsPanelRomSort) all=[...all].sort((a,b)=>a.romName.localeCompare(b.romName));
+    all.forEach(r=>{
+      const row=document.createElement('div'); row.className='rom-entry'+(r.merge?' rom-merged':'');
+      const badges=(r.merge?`<span class="rom-merge-lbl">merge</span>`:'')+(r.status==='baddump'?`<span class="rom-bad">bad</span>`:'');
+      row.innerHTML=`<div class="rom-fn">${esc(r.romName)}${badges}</div><div class="rom-sz">${r.size?fmtSize(r.size):'—'}</div><div class="rom-crc">${r.crc||'—'}</div>`;
+      wrap.appendChild(row);
+    });
+    body.appendChild(wrap);
+  }
+  buildRomList();
+
+  sortBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    _rsPanelRomSort=!_rsPanelRomSort;
+    updateSortBtn(); buildRomList();
+  });
+
+  hdr.addEventListener('click',()=>{ vis=!vis; body.style.display=vis?'':'none'; });
+  romSec.appendChild(hdr); romSec.appendChild(body);
+  container.appendChild(romSec);
+
+  // ── Romsets — collé à la liste ROM, même container ───────────────────────
+  const activeDats = getActiveDats();
+  if (activeDats.length > 0) {
+    const cs = document.createElement('div'); cs.className='rs-compat-sum';
+    const csHdr = document.createElement('div');
+    csHdr.className = 'rsp-sec-hdr';
+    csHdr.innerHTML = `<span>Romsets</span><span style="font-size:9px;color:var(--text-dim)">${_rsCompatCollapsed ? '▶' : '▼'}</span>`;
+    cs.appendChild(csHdr);
+    const csBody = document.createElement('div');
+    csBody.style.display = _rsCompatCollapsed ? 'none' : '';
+    activeDats.forEach(d => {
+      const ok = d.games.has(g.shortName);
+      const isActive = d.id === S.activeDatId;
+      const row = document.createElement('div');
+      row.className = 'rs-compat-row' + (ok?' clickable':'') + (isActive?' active':'');
+      if (ok) row.style.setProperty('--row-color', d.color);
+      row.innerHTML = `
+        <div class="rs-compat-dot" style="background:${ok?d.color:'var(--border)'}"></div>
+        <span class="rs-compat-lbl" style="${ok?'color:var(--text)':'opacity:0.45'}">${d.label}</span>
+        <span class="rs-compat-val" style="color:${ok?d.color:'var(--text-dim)'}">${ok?'✓':'—'}</span>`;
+      if (ok) {
+        row.addEventListener('click', () => {
+          S.activeDatId = d.id;
+          updateRsPanel(g);
+          updateZipPanel(g);
+        });
+      }
+      csBody.appendChild(row);
+    });
+    cs.appendChild(csBody);
+    csHdr.addEventListener('click', () => {
+      const nowCollapsed = csBody.style.display !== 'none';
+      csBody.style.display = nowCollapsed ? 'none' : '';
+      csHdr.querySelector('span:last-child').textContent = nowCollapsed ? '▶' : '▼';
+      _rsCompatCollapsed = nowCollapsed;
+      window.electronAPI.saveSettings({ rsCompatCollapsed: nowCollapsed });
+    });
+    container.appendChild(cs);
+  }
+}
+
+// ─── PANNEAU ZIP ─────────────────────────────────────────────────────────────
+let _zipCurrentGroupId = null;
+
+async function updateZipPanel(g) {
+  _zipCurrentGroupId = g.id;
+  const panelEmpty = document.getElementById('zip-panel-empty');
+  const panelBody  = document.getElementById('zip-panel-body');
+  const panelName  = document.getElementById('zip-panel-name');
+
+  // All files in the group
+  const allFiles = [...g.files, ...g.clones.flatMap(c => c.files)];
+
+  // Determine which file to show
+  let selFile = S.activeZipPath ? allFiles.find(f => f.path === S.activeZipPath) : null;
+
+  // Fallback to first zip
+  if (!selFile) {
+    selFile = allFiles.find(f => f.ext === 'zip');
+    if (selFile) S.activeZipPath = selFile.path;
+  }
+
+  panelName.textContent = selFile ? selFile.name : '';
+
+  if (!selFile) {
+    panelEmpty.innerHTML = '<span>Aucun fichier<br>ZIP pour ce jeu</span>';
+    panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
+    return;
+  }
+
+  if (selFile.ext !== 'zip') {
+    panelEmpty.innerHTML = `<span style="font-size:10px;color:var(--text-dim);text-align:center;padding:10px">${esc(selFile.name)}<br><span style="opacity:0.5">Fichier non ZIP</span></span>`;
+    panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
+    return;
+  }
+
+  // Show loading
+  panelEmpty.innerHTML = '<span style="font-size:10px;color:var(--text-dim)">⏳ Lecture…</span>';
+  panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
+
+  const result = await window.electronAPI.readZipContents(selFile.path);
+  if (_zipCurrentGroupId !== g.id) return;
+
+  if (result.error) {
+    panelEmpty.innerHTML = `<span style="color:var(--red);font-size:10px;padding:10px">⚠ ${esc(result.error)}</span>`;
+    panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
+    return;
+  }
+
+  const activeDat = getActiveDats().find(d => d.id === S.activeDatId) || getActiveDats()[0];
+  const datGame   = activeDat?.games.get(selFile.nameNoExt) || null;
+
+  renderZipPanel(panelBody, result.entries, datGame);
+  panelEmpty.style.display = 'none'; panelBody.style.display = 'block';
+}
+
+function renderZipPanel(container, entries, datGame) {
+  container.innerHTML = '';
+
+  // Expected ROM list from DAT (own roms only, no merge)
+  const datRoms = datGame?.roms?.filter(r => !r.merge) || [];
+  const datMap  = new Map(datRoms.map(r => [r.romName, r]));
+  const zipMap  = new Map(entries.map(e => [e.name, e]));
+
+  let nOk = 0, nBad = 0, nExtra = 0, nMiss = 0;
+
+  // Summary placeholder (filled after counting)
+  const sumDiv = document.createElement('div'); sumDiv.className = 'zip-summary';
+  container.appendChild(sumDiv);
+
+  // Column header
+  const hdrRow = document.createElement('div'); hdrRow.className = 'zip-hdr-row';
+  hdrRow.innerHTML = '<span>Fichier</span><span>Taille</span><span>CRC</span><span></span>';
+  container.appendChild(hdrRow);
+
+  // Sort entries alphabetically
+  const sorted = [...entries].sort((a, b) => a.name.localeCompare(b.name));
+
+  sorted.forEach(e => {
+    const datEntry = datMap.get(e.name);
+    let statusClass, icon, crcStyle = '';
+
+    if (!datGame) {
+      // No DAT — neutral display
+      statusClass = ''; icon = '';
+    } else if (datEntry) {
+      const crcOk  = datEntry.crc === e.crc;
+      const sizeOk = !datEntry.size || datEntry.size === e.size;
+      if (crcOk && sizeOk) {
+        statusClass = 'zip-entry-ok';
+        icon = `<span class="zip-icon" style="color:var(--green)" title="CRC OK">✓</span>`;
+        nOk++;
+      } else {
+        statusClass = 'zip-entry-bad';
+        const tip = !crcOk ? `CRC attendu: ${datEntry.crc}` : `Taille attendue: ${fmtSize(datEntry.size)}`;
+        icon = `<span class="zip-icon" style="color:var(--red)" title="${tip}">✗</span>`;
+        nBad++;
+      }
+    } else {
+      statusClass = 'zip-entry-extra';
+      icon = `<span class="zip-icon" style="color:var(--accent)" title="Non référencé dans le DAT">+</span>`;
+      nExtra++;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'zip-entry ' + statusClass;
+    row.innerHTML = `
+      <span class="zip-fn">${esc(e.name)}</span>
+      <span class="zip-sz">${fmtSize(e.size)}</span>
+      <span class="zip-crc">${e.crc}</span>
+      ${icon}`;
+    container.appendChild(row);
+  });
+
+  // DAT entries missing from the ZIP
+  datRoms.forEach(r => {
+    if (!zipMap.has(r.romName)) {
+      nMiss++;
+      const row = document.createElement('div');
+      row.className = 'zip-miss-row';
+      row.innerHTML = `
+        <span class="zip-miss-fn">${esc(r.romName)}</span>
+        <span class="zip-sz">${fmtSize(r.size)}</span>
+        <span class="zip-crc">${r.crc || '—'}</span>
+        <span class="zip-icon" style="color:var(--text-dim)" title="Attendu dans le DAT mais absent du ZIP">↓</span>`;
+      container.appendChild(row);
+    }
+  });
+
+  // Fill summary
+  const parts = [];
+  if (nOk)    parts.push(`<span class="zip-bdg zip-bdg-ok">✓ ${nOk}</span>`);
+  if (nBad)   parts.push(`<span class="zip-bdg zip-bdg-bad">✗ ${nBad} bad CRC</span>`);
+  if (nExtra) parts.push(`<span class="zip-bdg zip-bdg-extra">+${nExtra} extra</span>`);
+  if (nMiss)  parts.push(`<span class="zip-bdg zip-bdg-miss">↓ ${nMiss} manquant${nMiss > 1 ? 's' : ''}</span>`);
+  if (!parts.length) {
+    parts.push(`<span style="font-size:10px;color:var(--text-dim)">${entries.length} fichier${entries.length > 1 ? 's' : ''}${datGame ? '' : ' — aucun DAT'}</span>`);
+  }
+  sumDiv.innerHTML = parts.join('');
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+function toggleDelete(path){
+  if(S.toDelete.has(path)) S.toDelete.delete(path); else S.toDelete.add(path);
+  updateExportBar(); if(S.activeId) openGroup(S.activeId);
+}
+function clearMarked(){ S.toDelete.clear(); updateExportBar(); if(S.activeId) openGroup(S.activeId); }
+function updateExportBar(){
+  const bar=document.getElementById('exp-bar'), n=S.toDelete.size;
+  bar.classList.toggle('vis',n>0);
+  document.getElementById('exp-count').textContent=`${n} fichier${n>1?'s':''} marqué${n>1?'s':''} pour suppression`;
+}
+async function exportList(){
+  const content=[...S.toDelete].sort().join('\n');
+  await window.electronAPI.saveList(content);
+}
+async function trashMarked(){
+  const paths=[...S.toDelete];
+  if(!paths.length) return;
+  if(!confirm(`Envoyer ${paths.length} fichier${paths.length>1?'s':''} à la corbeille ?`)) return;
+  const {errors}=await window.electronAPI.trashFiles(paths);
+  if(errors.length) alert('Erreurs :\n'+errors.map(e=>e.path+'\n'+e.error).join('\n'));
+  S.toDelete.clear(); updateExportBar(); if(S.activeId) openGroup(S.activeId);
+}
+
+// ─── TOOLBAR ─────────────────────────────────────────────────────────────────
+const searchEl=document.getElementById('search'), schClr=document.getElementById('sch-clr');
+let _searchTimer;
+searchEl.addEventListener('input',()=>{
+  schClr.style.display=searchEl.value?'block':'none';
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(()=>{ S.search=searchEl.value.trim().toLowerCase(); S.renderLimit=250; applyFilterSort(); }, 120);
+});
+schClr.addEventListener('click',()=>{ searchEl.value=''; S.search=''; schClr.style.display='none'; clearTimeout(_searchTimer); S.renderLimit=250; applyFilterSort(); window.electronAPI.saveSettings({ lastSearch: '' }); searchEl.focus(); });
+searchEl.addEventListener('blur', async () => { await window.electronAPI.saveSettings({ lastSearch: S.search }); });
+
+document.querySelectorAll('#filter-row .fbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(btn.disabled) return;
+    document.querySelectorAll('#filter-row .fbtn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); S.filter=btn.dataset.f; S.renderLimit=250; applyFilterSort();
+  });
+});
+document.getElementById('sort-sel').addEventListener('change',e=>{
+  S.sort=e.target.value; S.sortReverse=false;
+  const btn=document.getElementById('sort-rev');
+  btn.classList.add('asc'); btn.classList.remove('desc');
+  S.renderLimit=250; applyFilterSort();
+});
+document.getElementById('sort-rev').addEventListener('click',()=>{
+  S.sortReverse=!S.sortReverse;
+  const btn=document.getElementById('sort-rev');
+  btn.classList.toggle('asc',!S.sortReverse);
+  btn.classList.toggle('desc',S.sortReverse);
+  S.renderLimit=250; applyFilterSort();
+});
+document.getElementById('hbtn-add-folder').addEventListener('click',triggerAddFolder);
+document.getElementById('hbtn-add-dat').addEventListener('click',triggerAddDat);
+document.getElementById('btn-go').addEventListener('click',buildApp);
+document.getElementById('btn-add-folder-load').addEventListener('click',triggerAddFolder);
+document.getElementById('btn-export-list').addEventListener('click',exportList);
+document.getElementById('btn-trash-marked').addEventListener('click',trashMarked);
+document.getElementById('btn-clear-marked').addEventListener('click',clearMarked);
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function makeAlert(cls,html){ const d=document.createElement('div'); d.className=`alert ${cls}`; d.innerHTML=html; return d; }
+function setScreen(name){
+  document.getElementById('scr-load').style.display=name==='load'?'flex':'none';
+  document.getElementById('scr-prog').style.display=name==='prog'?'flex':'none';
+  document.getElementById('scr-app').style.display =name==='app' ?'flex':'none';
+}
+function prog(pct,label){ document.getElementById('prog-bar').style.width=pct+'%'; if(label) document.getElementById('prog-lbl').textContent=label; }
+function fmtSize(bytes){ if(!bytes)return'—'; if(bytes<1024)return bytes+' B'; if(bytes<1024*1024)return(bytes/1024).toFixed(1)+' KB'; if(bytes<1024**3)return(bytes/1024**2).toFixed(1)+' MB'; return(bytes/1024**3).toFixed(2)+' GB'; }
+function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function highlight(str,q){ if(!q)return str; const safe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); return str.replace(new RegExp(`(${safe})`,'gi'),'<mark>$1</mark>'); }
+
+// ─── ZOOM ─────────────────────────────────────────────────────────────────────
+(function(){
+  const STEP=0.1, MIN=0.5, MAX=2.0;
+  let factor=1.0;
+  const valEl=document.getElementById('zoom-val');
+  function applyZoom(f){
+    factor=Math.round(Math.min(MAX,Math.max(MIN,f))*10)/10;
+    window.electronAPI.setZoom(factor);
+    valEl.textContent=Math.round(factor*100)+'%';
+    window.electronAPI.saveSettings({zoom:factor});
+  }
+  window.electronAPI.loadSettings().then(s=>{ if(s?.zoom) { factor=s.zoom; applyZoom(factor); } });
+  document.getElementById('zoom-in') .addEventListener('click',()=>applyZoom(factor+STEP));
+  document.getElementById('zoom-out').addEventListener('click',()=>applyZoom(factor-STEP));
+  document.getElementById('zoom-rst').addEventListener('click',()=>applyZoom(1.0));
+  document.addEventListener('keydown',e=>{
+    if(!e.ctrlKey) return;
+    if(e.key==='='||e.key==='+'){e.preventDefault();applyZoom(factor+STEP);}
+    else if(e.key==='-'){e.preventDefault();applyZoom(factor-STEP);}
+    else if(e.key==='0'){e.preventDefault();applyZoom(1.0);}
+  });
+})();
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+async function savePaths() {
+  await window.electronAPI.saveSettings({
+    folders: S.folders.map(f => ({ path: f.folderPath, disabled: !!f.disabled })).filter(f => f.path),
+    dats:    S.dats.map(d => ({ path: d._filePath,   disabled: !!d.disabled })).filter(d => d.path),
+  });
+}
+
+async function restorePaths() {
+  showLoadingBar();
+  const emuIdMap = await loadEmulators();
+  const s = await window.electronAPI.loadSettings();
+  if (s) {
+    if (s.hideTags !== undefined) S.uiPrefs.hideTags = s.hideTags;
+    if (s.rsCompatCollapsed !== undefined) _rsCompatCollapsed = s.rsCompatCollapsed;
+    if (s.lastSearch) {
+      S.search = s.lastSearch;
+      const el = document.getElementById('search');
+      if (el) { el.value = s.lastSearch; document.getElementById('sch-clr').style.display = 'block'; }
+    }
+
+    for (const entry of (s.folders || [])) {
+      if (!entry?.path) continue;
+      if (entry.disabled) {
+        const folderName = entry.path.split(/[/\\]/).pop() || entry.path;
+        S.folders.push({
+          id: 'folder_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+          name: folderName, color: FOLDER_COLORS[S.folders.length % FOLDER_COLORS.length],
+          folderPath: entry.path, files: [], disabled: true,
+        });
+      } else {
+        const data = await window.electronAPI.scanFolder(entry.path);
+        if (data && data.files.length) onFolderData(data, true);
+      }
+    }
+    updateFolderChips();
+
+    for (const entry of (s.dats || [])) {
+      if (!entry?.path) continue;
+      if (entry.disabled) {
+        const fileName = entry.path.split(/[/\\]/).pop() || entry.path;
+        S.dats.push({
+          id: 'dat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+          label: fileName.replace(/\.[^.]+$/, ''),
+          color: DAT_COLORS[S.dats.length % DAT_COLORS.length],
+          fileName, games: new Map(), _filePath: entry.path, disabled: true,
+        });
+      } else {
+        const data = await window.electronAPI.readFile(entry.path);
+        if (data) loadDatFrom(data.fileName, data.content, entry.path, true);
+      }
+    }
+    refreshDatCard();
+  }
+
+  const gp = await window.electronAPI.loadGamePrefs();
+  if (gp) S.gamePrefs = gp;
+
+  // Remapper les préférences si les IDs émulateurs ont changé
+  if (Object.keys(emuIdMap).length > 0) {
+    let changed = false;
+    for (const [oldId, newId] of Object.entries(emuIdMap)) {
+      for (const key of Object.keys(S.gamePrefs)) {
+        if (S.gamePrefs[key] === oldId) { S.gamePrefs[key] = newId; changed = true; }
+      }
+    }
+    if (changed) await saveGamePrefs();
+  }
+
+  const chkHide = document.getElementById('chk-hide-tags');
+  if (chkHide) chkHide.checked = !!S.uiPrefs.hideTags;
+  hideLoadingBar();
+}
+
+document.getElementById('chk-hide-tags')?.addEventListener('change', async e => {
+  S.uiPrefs.hideTags = e.target.checked;
+  await window.electronAPI.saveSettings({ hideTags: e.target.checked });
+  renderList();
+});
+
+// ─── TOOLBAR COLLAPSE ────────────────────────────────────────────────────────
+(function(){
+  const toggle  = document.getElementById('toolbar-toggle');
+  const toolbar = document.getElementById('toolbar');
+  const summary = document.getElementById('toolbar-toggle-summary');
+
+  function updateSummary(){
+    const f = document.querySelector('.fbtn.on')?.textContent||'';
+    const parts=[f&&f!=='Tous'?f:''].filter(Boolean);
+    summary.textContent = parts.length ? '— '+parts.join(', ') : '';
+  }
+
+  let collapsed = false;
+  window.electronAPI.loadSettings().then(s=>{ if(s?.toolbarCollapsed){ collapsed=true; toolbar.classList.add('collapsed'); toggle.classList.add('collapsed'); } });
+
+  toggle.addEventListener('click',()=>{
+    collapsed=!collapsed;
+    toolbar.classList.toggle('collapsed',collapsed);
+    toggle.classList.toggle('collapsed',collapsed);
+    updateSummary();
+    window.electronAPI.saveSettings({toolbarCollapsed:collapsed});
+  });
+
+  // mettre à jour le résumé quand les filtres changent
+  document.addEventListener('click',e=>{ if(e.target.classList.contains('fbtn')) setTimeout(updateSummary,10); });
+  document.getElementById('search').addEventListener('input',updateSummary);
+})();
+
+setScreen('load');
+restorePaths();
+
+
+// ─── RESIZE PANNEAUX ─────────────────────────────────────────────────────────
+(function(){
+  // ── Restauration des largeurs sauvegardées ────────────────────────────────
+  window.electronAPI.loadSettings().then(s => {
+    if (s?.leftWidth)  document.getElementById('left').style.width      = s.leftWidth  + 'px';
+    if (s?.zipWidth)   document.getElementById('zip-panel').style.width = s.zipWidth   + 'px';
+    if (s?.rsWidth)    document.getElementById('rs-panel').style.width  = s.rsWidth    + 'px';
+  });
+
+  function makeResizeHandler(handle, panel, { minW, maxW, direction, settingKey }) {
+    // direction: 'left' = le handle est sur le bord gauche (glisser ← = agrandir)
+    //            'right' = le handle est sur le bord droit (glisser → = agrandir)
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      let startX = e.clientX, startW = panel.offsetWidth;
+      handle.classList.add('dragging');
+      document.body.style.cursor    = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const onMove = ev => {
+        const delta = direction === 'left' ? (startX - ev.clientX) : (ev.clientX - startX);
+        panel.style.width = Math.min(maxW, Math.max(minW, startW + delta)) + 'px';
+      };
+      const onUp = () => {
+        handle.classList.remove('dragging');
+        document.body.style.cursor    = '';
+        document.body.style.userSelect = '';
+        window.electronAPI.saveSettings({ [settingKey]: panel.offsetWidth });
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+  }
+
+  makeResizeHandler(
+    document.getElementById('zip-resize-handle'),
+    document.getElementById('zip-panel'),
+    { minW: 160, maxW: 500, direction: 'left', settingKey: 'zipWidth' }
+  );
+
+  makeResizeHandler(
+    document.getElementById('rs-resize-handle'),
+    document.getElementById('rs-panel'),
+    { minW: 180, maxW: 620, direction: 'left', settingKey: 'rsWidth' }
+  );
+
+  makeResizeHandler(
+    document.getElementById('left-resize-handle'),
+    document.getElementById('left'),
+    { minW: 180, maxW: 560, direction: 'right', settingKey: 'leftWidth' }
+  );
+})();
+
+// ─── PANEL COLLAPSE ──────────────────────────────────────────────────────────
+(function() {
+  function setupPanelCollapse(panelId, tabId, btnId, settingKey) {
+    const panel = document.getElementById(panelId);
+    const tab   = document.getElementById(tabId);
+    const btn   = document.getElementById(btnId);
+    if (!panel || !tab || !btn) return;
+    let collapsed = false;
+
+    function setCollapsed(val, save = true) {
+      collapsed = val;
+      panel.classList.toggle('panel-collapsed', collapsed);
+      btn.textContent = collapsed ? '◀' : '▶';
+      btn.title       = collapsed ? 'Développer' : 'Réduire';
+      if (save) window.electronAPI.saveSettings({ [settingKey]: collapsed });
+    }
+
+    const hdrEl = document.getElementById(panelId + '-hdr');
+    if (hdrEl) hdrEl.addEventListener('click', () => setCollapsed(!collapsed));
+    tab.addEventListener('click', () => setCollapsed(false));
+    window.electronAPI.loadSettings().then(s => { if (s?.[settingKey]) setCollapsed(true, false); });
+  }
+
+  setupPanelCollapse('zip-panel', 'zip-collapsed-tab', 'zip-collapse-btn', 'zipCollapsed');
+  setupPanelCollapse('rs-panel',  'rs-collapsed-tab',  'rs-collapse-btn',  'rsCollapsed');
+})();
+
+// ─── LISTE COLLAPSIBLE ────────────────────────────────────────────────────────
+(function(){
+  const bar    = document.getElementById('list-count-bar');
+  const list   = document.getElementById('rom-list');
+  let collapsed = false;
+  bar.addEventListener('click', () => {
+    collapsed = !collapsed;
+    list.classList.toggle('collapsed', collapsed);
+    bar.classList.toggle('collapsed', collapsed);
+  });
+})();
+
+
+// ─── ÉMULATEURS ──────────────────────────────────────────────────────────────
+S.emulators = [];
+function makeEmuId(name) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const exists = S.emulators.filter(e => e.id === base || e.id.startsWith(base + '_')).length;
+  return exists === 0 ? base : base + '_' + String(exists + 1).padStart(3, '0');
+}
+async function loadEmulators() {
+  const s = await window.electronAPI.loadSettings();
+  const raw = s?.emulators || [];
+
+  // ── Migration : recalcul des IDs depuis le nom ────────────────────────────
+  // On repart d'un tableau vide pour que makeEmuId gère la déduplication proprement.
+  const idMap = {}; // { ancienId: nouveauId }
+  const rebuilt = [];
+  for (const emu of raw) {
+    S.emulators = rebuilt;               // makeEmuId lit S.emulators pour la dédup
+    const newId = makeEmuId(emu.name);
+    if (emu.id !== newId) idMap[emu.id] = newId;
+    // Migration extraArgs → cmdArgs
+    let cmdArgs = emu.cmdArgs;
+    if (!cmdArgs) {
+      // ancien format : on met les extraArgs en premier, puis {rom} à la fin
+      cmdArgs = [...(emu.extraArgs || []), '{rom}'];
+    }
+    const { extraArgs: _drop, ...rest } = emu; // eslint-disable-line no-unused-vars
+    rebuilt.push({ ...rest, id: newId, cmdArgs });
+  }
+  S.emulators = rebuilt;
+
+  if (Object.keys(idMap).length > 0) {
+    await saveEmulators();               // persist la migration dans settings.json
+  }
+  return idMap;
+}
+async function saveEmulators() {
+  await window.electronAPI.saveSettings({ emulators: S.emulators });
+}
+async function saveGamePrefs() {
+  await window.electronAPI.saveGamePrefs(S.gamePrefs);
+}
+function renderEmuList(editIdx=null) {
+  const list = document.getElementById('emu-list');
+  list.innerHTML = '';
+  if (!S.emulators.length) { list.innerHTML = '<div class="emu-empty">Aucun émulateur configuré.</div>'; return; }
+  S.emulators.forEach((emu, i) => {
+    const row = document.createElement('div');
+    row.className = 'emu-row' + (i===editIdx ? ' emu-row-editing' : '');
+    const cmdStr = (emu.cmdArgs||['{rom}']).join(' ');
+    row.innerHTML =
+      `<span class="emu-row-label" title="${esc(emu.name)}">${esc(emu.name)}</span>`
+      +`<span class="emu-row-path" title="${esc(emu.exePath)}">${esc(emu.exePath)}</span>`
+      +`<span class="emu-row-path" style="color:var(--accent2);flex:0 1 auto;max-width:140px" title="${esc(cmdStr)}">${esc(cmdStr)}</span>`
+      +`<button class="emu-row-edit" data-i="${i}" title="Éditer">🔽</button>`
+      +`<button class="emu-row-del"  data-i="${i}" title="Supprimer">✕</button>`;
+    row.querySelector('.emu-row-del').addEventListener('click', async () => {
+      S.emulators.splice(i,1); await saveEmulators(); renderEmuList(); _resetEmuForm();
+    });
+    row.querySelector('.emu-row-edit').addEventListener('click', () => _loadEmuIntoForm(i));
+    list.appendChild(row);
+  });
+}
+
+// ── Token builder state ───────────────────────────────────────────────────────
+let _emuTokens = [];  // string[]
+
+function _renderTokens() {
+  const container = document.getElementById('emu-tokens-list');
+  if (!container) return;
+  container.innerHTML = '';
+  _emuTokens.forEach((tok, i) => {
+    const chip = document.createElement('span');
+    const isRom  = tok === '{rom}';
+    const isRp   = tok === '{rompath}';
+    chip.className = 'emu-token ' + (isRom ? 'emu-token-rom' : isRp ? 'emu-token-rompath' : 'emu-token-arg');
+    chip.innerHTML =
+      (i > 0 ? `<button class="emu-token-up" data-i="${i}" title="">◀</button>` : '')
+      + `<span>${esc(tok)}</span>`
+      + (i < _emuTokens.length-1 ? `<button class="emu-token-dn" data-i="${i}" title="">▶</button>` : '')
+      + `<button class="emu-token-rm" data-i="${i}" title="Retirer">✕</button>`;
+    chip.querySelector('.emu-token-rm').addEventListener('click', () => { _emuTokens.splice(i,1); _renderTokens(); });
+    chip.querySelector('.emu-token-up')?.addEventListener('click', () => { [_emuTokens[i-1], _emuTokens[i]] = [_emuTokens[i], _emuTokens[i-1]]; _renderTokens(); });
+    chip.querySelector('.emu-token-dn')?.addEventListener('click', () => { [_emuTokens[i], _emuTokens[i+1]] = [_emuTokens[i+1], _emuTokens[i]]; _renderTokens(); });
+    container.appendChild(chip);
+  });
+}
+
+(function initEmuModal() {
+  let _editIdx = null;
+
+  window._resetEmuForm = function() {
+    _editIdx = null;
+    document.getElementById('emu-name-input').value = '';
+    document.getElementById('emu-path-input').value = '';
+    document.getElementById('emu-arg-input').value  = '';
+    _emuTokens = ['{rom}'];
+    _renderTokens();
+    document.getElementById('emu-add').textContent = '＋ Ajouter';
+    document.getElementById('emu-add').style.background = '';
+    document.getElementById('emu-cancel-edit')?.remove();
+    renderEmuList();
+  };
+  window._loadEmuIntoForm = function(i) {
+    const emu = S.emulators[i]; if (!emu) return;
+    _editIdx = i;
+    document.getElementById('emu-name-input').value = emu.name;
+    document.getElementById('emu-path-input').value = emu.exePath;
+    document.getElementById('emu-arg-input').value  = '';
+    _emuTokens = [...(emu.cmdArgs && emu.cmdArgs.length ? emu.cmdArgs : ['{rom}'])];
+    _renderTokens();
+    const btnAdd = document.getElementById('emu-add');
+    btnAdd.textContent = '✔ Mettre à jour';
+    btnAdd.style.background = 'var(--accent2)';
+    if (!document.getElementById('emu-cancel-edit')) {
+      const btnCancel = document.createElement('button');
+      btnCancel.id = 'emu-cancel-edit';
+      btnCancel.className = 'btn-clr';
+      btnCancel.style.cssText = 'font-size:11px;padding:7px 10px;border-radius:3px;cursor:pointer;';
+      btnCancel.textContent = 'Annuler';
+      btnCancel.addEventListener('click', () => window._resetEmuForm());
+      btnAdd.insertAdjacentElement('afterend', btnCancel);
+    }
+    renderEmuList(i);
+    document.getElementById('emu-name-input').focus();
+  };
+
+  const overlay   = document.getElementById('emu-overlay');
+  const btnOpen   = document.getElementById('hbtn-emulators');
+  const btnClose  = document.getElementById('emu-close');
+  const btnBrowse = document.getElementById('emu-browse');
+  const btnAdd    = document.getElementById('emu-add');
+  const inpName   = document.getElementById('emu-name-input');
+  const inpPath   = document.getElementById('emu-path-input');
+  const inpArg    = document.getElementById('emu-arg-input');
+
+  // token shortcut buttons
+  document.getElementById('emu-tok-add-arg').addEventListener('click', () => {
+    const v = inpArg.value.trim(); if (!v) return;
+    // split on spaces but respect quotes
+    const parts = v.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+    parts.forEach(p => _emuTokens.push(p.replace(/^"|"$/g, '')));
+    inpArg.value = ''; _renderTokens(); inpArg.focus();
+  });
+  document.getElementById('emu-tok-rom').addEventListener('click',     () => { _emuTokens.push('{rom}');     _renderTokens(); });
+  document.getElementById('emu-tok-rompath').addEventListener('click', () => { _emuTokens.push('{rompath}'); _renderTokens(); });
+  inpArg.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('emu-tok-add-arg').click(); });
+
+  btnOpen.addEventListener('click', async () => {
+    await loadEmulators(); renderEmuList(); _renderTokens(); overlay.classList.remove('hidden');
+  });
+  btnClose.addEventListener('click', () => { overlay.classList.add('hidden'); window._resetEmuForm(); });
+  overlay.addEventListener('click', e => { if (e.target===overlay) { overlay.classList.add('hidden'); window._resetEmuForm(); } });
+  btnBrowse.addEventListener('click', async () => { const p=await window.electronAPI.selectEmulatorExe(); if(p) inpPath.value=p; });
+
+  btnAdd.addEventListener('click', async () => {
+    const name = inpName.value.trim(), exePath = inpPath.value.trim();
+    if (!name || !exePath) return;
+    const cmdArgs = _emuTokens.length ? [..._emuTokens] : ['{rom}'];
+    if (_editIdx !== null) {
+      S.emulators[_editIdx] = { ...S.emulators[_editIdx], name, exePath, cmdArgs };
+    } else {
+      S.emulators.push({ id: makeEmuId(name), name, exePath, cmdArgs });
+    }
+    await saveEmulators(); window._resetEmuForm();
+  });
+
+  const onEnter = e => { if (e.key === 'Enter') btnAdd.click(); };
+  inpName.addEventListener('keydown', onEnter);
+  inpPath.addEventListener('keydown', onEnter);
+
+  // init tokens display
+  _emuTokens = ['{rom}']; _renderTokens();
+})();
+
+// ─── MENU CONTEXTUEL ─────────────────────────────────────────────────────────
+const ctxMenu = document.getElementById('ctx-menu');
+function hideCtxMenu(){ ctxMenu.classList.add('hidden'); ctxMenu.innerHTML=''; }
+document.addEventListener('click', () => hideCtxMenu());
+document.addEventListener('keydown', e => { if (e.key==='Escape') hideCtxMenu(); });
+
+// file = { name, nameNoExt, path, sizeStr, … }
+function showCtxMenu(e, file) {
+  e.preventDefault(); e.stopPropagation(); ctxMenu.innerHTML='';
+
+  const title=document.createElement('div'); title.className='ctx-sub-hdr';
+  title.textContent=file.name; ctxMenu.appendChild(title);
+  ctxMenu.appendChild(Object.assign(document.createElement('div'),{className:'ctx-sep'}));
+
+  const opn=document.createElement('div'); opn.className='ctx-item';
+  opn.innerHTML='↗ <span>Ouvrir</span>';
+  opn.addEventListener('click', ev=>{ ev.stopPropagation(); window.electronAPI.openFile(file.path); hideCtxMenu(); });
+  ctxMenu.appendChild(opn);
+
+  const rev=document.createElement('div'); rev.className='ctx-item';
+  rev.innerHTML='📂 <span>Révéler dans l\'explorateur</span>';
+  rev.addEventListener('click', ev=>{ ev.stopPropagation(); window.electronAPI.revealFile(file.path); hideCtxMenu(); });
+  ctxMenu.appendChild(rev);
+
+  ctxMenu.appendChild(Object.assign(document.createElement('div'),{className:'ctx-sep'}));
+
+  if (!S.emulators.length) {
+    const n=document.createElement('div'); n.className='ctx-item ctx-disabled';
+    n.innerHTML='▶ <span>Aucun émulateur configuré</span>'; ctxMenu.appendChild(n);
+  } else {
+    const lhdr=document.createElement('div'); lhdr.className='ctx-sub-hdr';
+    lhdr.textContent='Lancer avec…'; ctxMenu.appendChild(lhdr);
+    S.emulators.forEach(emu => {
+      const ei=document.createElement('div'); ei.className='ctx-item';
+      ei.innerHTML=`▶ <span>${esc(emu.name)}</span>`;
+      ei.addEventListener('click', async ev => {
+        ev.stopPropagation(); hideCtxMenu();
+        const romDir = file.path ? file.path.replace(/[\\/][^\\/]+$/, '') : '';
+        const r = await window.electronAPI.launchEmulator({
+          exePath:      emu.exePath,
+          resolvedArgs: buildArgs(emu, file.nameNoExt, romDir),
+        });
+        if (!r.ok) alert('Erreur lancement :\n' + r.error);
+      });
+      ctxMenu.appendChild(ei);
+    });
+  }
+
+  ctxMenu.classList.remove('hidden');
+  const mw=ctxMenu.offsetWidth||220, mh=ctxMenu.offsetHeight||150;
+  let x=e.clientX, y=e.clientY;
+  if (x+mw>window.innerWidth-8)  x=window.innerWidth-mw-8;
+  if (y+mh>window.innerHeight-8) y=window.innerHeight-mh-8;
+  ctxMenu.style.left=x+'px'; ctxMenu.style.top=y+'px';
+}
+
+// ─── CONSOLE DRAWER ──────────────────────────────────────────────────────────
+(function() {
+  const drawer    = document.getElementById('console-drawer');
+  const bar       = document.getElementById('console-bar');
+  const output    = document.getElementById('console-output');
+  const statusEl  = document.getElementById('console-bar-status');
+  let collapsed   = false;
+  let lineCount   = 0;
+  
+  // Restaurer l'état collapsed depuis les settings
+  window.electronAPI.loadSettings().then(s => {
+    if (s?.consoleCollapsed !== false) { // collapsed par défaut si pas de setting
+      collapsed = true;
+      drawer.classList.add('collapsed');
+    }
+  });
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = cls || '';
+  }
+
+  function addLine(text) {
+    // Show drawer on first line
+    if (drawer.classList.contains('hidden')) {
+      drawer.classList.remove('hidden');
+      collapsed = false;
+      drawer.classList.remove('collapsed');
+    }
+
+    const div = document.createElement('div');
+    div.className = 'cline';
+    if (text.startsWith('▶')) { div.classList.add('cmd'); setStatus('En cours…', 'running'); }
+    else if (text.startsWith('❌') || /\berror\b|\berr:/i.test(text)) { div.classList.add('err'); setStatus('Erreur', 'err'); }
+    else if (text.startsWith('⏹')) { div.classList.add('done'); setStatus(text, 'done'); }
+    else if (/\bwarning\b|\binfo\b/i.test(text)) div.classList.add('info');
+    div.textContent = text;
+    output.appendChild(div);
+    lineCount++;
+    if (!collapsed) output.scrollTop = output.scrollHeight;
+  }
+
+  // Toggle collapse on bar click (but not on buttons)
+  bar.addEventListener('click', e => {
+    if (e.target.classList.contains('cbtn')) return;
+    collapsed = !collapsed;
+    drawer.classList.toggle('collapsed', collapsed);
+    if (!collapsed) output.scrollTop = output.scrollHeight;
+    window.electronAPI.saveSettings({ consoleCollapsed: collapsed });
+  });
+
+  document.getElementById('cbtn-clear').addEventListener('click', e => {
+    e.stopPropagation();
+    output.innerHTML = ''; lineCount = 0; setStatus('');
+  });
+  document.getElementById('cbtn-top').addEventListener('click', e => {
+    e.stopPropagation(); output.scrollTop = 0;
+  });
+  document.getElementById('cbtn-bot').addEventListener('click', e => {
+    e.stopPropagation(); output.scrollTop = output.scrollHeight;
+  });
+
+  // Receive lines from main process
+  window.electronAPI.onConsoleLine(line => addLine(line));
+})();
+
+// ─── SNAP PANEL ──────────────────────────────────────────────────────────────
+(function() {
+  const panel   = document.getElementById('snap-panel');
+  const bar     = document.getElementById('snap-bar');
+  const handle  = document.getElementById('snap-handle');
+  const img     = document.getElementById('snap-img');
+  const emptyEl = document.getElementById('snap-empty-msg');
+  let collapsed   = true;
+  let panelHeight = 220;
+
+  function setCollapsed(val, save = true) {
+    collapsed = val;
+    panel.classList.toggle('collapsed', collapsed);
+    panel.style.height = collapsed ? '28px' : panelHeight + 'px';
+    if (save) window.electronAPI.saveSettings({ snapCollapsed: collapsed, snapHeight: panelHeight });
+  }
+
+  bar.addEventListener('click', () => setCollapsed(!collapsed));
+
+  handle.addEventListener('mousedown', e => {
+    if (collapsed) return;
+    e.preventDefault();
+    const startY = e.clientY, startH = panel.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = ev => {
+      panelHeight = Math.min(700, Math.max(60, startH + (startY - ev.clientY)));
+      panel.style.height = panelHeight + 'px';
+    };
+    const onUp = () => {
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.electronAPI.saveSettings({ snapCollapsed: collapsed, snapHeight: panelHeight });
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  window.electronAPI.loadSettings().then(s => {
+    if (s?.snapHeight) panelHeight = s.snapHeight;
+    setCollapsed(s?.snapCollapsed !== false ? true : false, false);
+  });
+
+  window.updateSnapPanel = async function(shortName) {
+    if (!shortName) {
+      img.style.display = 'none'; emptyEl.style.display = '';
+      emptyEl.textContent = 'Sélectionne un jeu'; return;
+    }
+    const url = await window.electronAPI.findSnap(shortName);
+    if (url) {
+      img.src = url;
+      img.style.display = 'block';
+      emptyEl.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      emptyEl.style.display = '';
+      emptyEl.textContent = 'Aucune image';
+    }
+  };
+})();
+
+// ─── NAVIGATION JOYPAD ──────────────────────────────────────────────────────────
+function initGamepad() {
+  let lastMove = 0;
+  let currentIdx = -1;
+  let lastClickA = 0;
+  let lastBtnA = false;
+
+  // Reset l'index si la liste change (re-render)
+  const romList = document.getElementById('rom-list');
+  if (romList) {
+    new MutationObserver(() => {
+      // Retrouver le nouvel index de l'élément actif après re-render
+      const items = romList.querySelectorAll('.ritem');
+      const active = romList.querySelector('.ritem.active');
+      currentIdx = active ? [...items].indexOf(active) : currentIdx;
+    }).observe(romList, { childList: true, subtree: false });
+  }
+
+  function gamepadLoop(ts) {
+    requestAnimationFrame(gamepadLoop);
+    const gp = navigator.getGamepads?.()[0];
+    if (!gp || ts - lastMove < 200) return;
+
+    const axis = gp.axes[1];
+    const dpadUp   = gp.buttons[12]?.pressed;
+    const dpadDown = gp.buttons[13]?.pressed;
+
+    if (axis < -0.5 || dpadUp) {
+      lastMove = ts;
+      navigateList(-1);
+    } else if (axis > 0.5 || dpadDown) {
+      lastMove = ts;
+      navigateList(1);
+    }
+	
+	const btnA = gp.buttons[0]?.pressed;
+
+	if (btnA && !lastBtnA) {  // front montant seulement (pas de répétition en maintenant)
+	  const active = document.querySelector('.ritem.active');
+	  if (active) {
+		const now = Date.now();
+		if (now - lastClickA < 400) {
+		  // Double-clic
+		  active.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+		  lastClickA = 0;
+		} else {
+		  active.click();
+		  lastClickA = now;
+		}
+	  }
+	}
+	lastBtnA = btnA;
+  }
+
+  function navigateList(dir) {
+    const items = [...document.querySelectorAll('.ritem')];
+    if (!items.length) return;
+    currentIdx = Math.max(0, Math.min(items.length - 1, currentIdx + dir));
+    items[currentIdx].click();
+    items[currentIdx].scrollIntoView({ block: 'nearest' });
+  }
+
+  window.addEventListener('gamepadconnected', e => {
+    console.log('Joypad connecté:', e.gamepad.id);
+    requestAnimationFrame(gamepadLoop);
+  });
+}
+
+initGamepad();
+</script>
+</body>
+</html>

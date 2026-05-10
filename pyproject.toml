@@ -1,0 +1,9 @@
+[project]
+name = "retro_rom_view"
+description = "Arcade rom manager & frontend"
+version = "1.6.0"
+license = {file = "LICENSE"}
+dependencies = ["PyQt6>=6.6.0"]
+
+[project.urls]
+Repository = "https://github.com/tetsuoo-online/Retro-ROM_View.git"

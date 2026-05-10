@@ -1,0 +1,12 @@
+{
+  "name": "retro-rom-viewer",
+  "version": "1.6.0",
+  "description": "Arcade rom manager & frontend",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

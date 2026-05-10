@@ -1,0 +1,20 @@
+.git/
+__pycache__/
+_misc/
+_temp/
+cfg/
+node_modules/
+snap/
+*.bak
+*.pyc
+*.zip
+*- Copie*.*
+_PUBLISH.BAT
+_update-version.ps1
+blue.ico
+Desktop.ini
+games.json
+settings.json
+README_*
+TODO.txt
+node.zip

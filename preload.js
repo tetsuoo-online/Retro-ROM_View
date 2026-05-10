@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer, webFrame, webUtils } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  selectFolder:       () => ipcRenderer.invoke('select-folder'),
+  scanFolder:         (p) => ipcRenderer.invoke('scan-folder', p),
+  selectDat:          () => ipcRenderer.invoke('select-dat'),
+  readFile:           (p) => ipcRenderer.invoke('read-file', p),
+  trashFiles:         (paths) => ipcRenderer.invoke('trash-files', paths),
+  deleteFiles:        (paths) => ipcRenderer.invoke('delete-files', paths),
+  revealFile:         (filePath) => ipcRenderer.invoke('reveal-file', filePath),
+  openFile:           (filePath) => ipcRenderer.invoke('open-file', filePath),
+  saveList:           (content) => ipcRenderer.invoke('save-list', content),
+  loadSettings:       () => ipcRenderer.invoke('load-settings'),
+  saveSettings:       (patch) => ipcRenderer.invoke('save-settings', patch),
+  setZoom:            (factor) => webFrame.setZoomFactor(factor),
+  getZoom:            () => webFrame.getZoomFactor(),
+  selectEmulatorExe:  () => ipcRenderer.invoke('select-emulator-exe'),
+  launchEmulator:     (opts) => ipcRenderer.invoke('launch-emulator', opts),
+  loadGamePrefs: () => ipcRenderer.invoke('load-game-prefs'),
+  saveGamePrefs: (prefs) => ipcRenderer.invoke('save-game-prefs', prefs),
+  onConsoleLine: (callback) => ipcRenderer.on('console-line', (_event, line) => callback(line)),
+  getPathForFile:   (file) => webUtils.getPathForFile(file),
+  readZipContents:  (p)    => ipcRenderer.invoke('read-zip-contents', p),
+  findSnap: (shortName) => ipcRenderer.invoke('find-snap', shortName),
+});
