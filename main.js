@@ -177,7 +177,7 @@ ipcMain.handle('launch-emulator', async (e, { exePath, resolvedArgs }) => {
 });
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
-const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+const SETTINGS_PATH = path.join(__dirname, 'config/settings.json');
 
 function readSettings() {
   try { return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')); }
@@ -195,7 +195,7 @@ ipcMain.handle('load-settings', () => readSettings());
 ipcMain.handle('save-settings', (e, patch) => writeSettings(patch));
 
 // ─── GAME PREFS ──────────────────────────────────────────────────────────────
-const GAME_PREFS_PATH = path.join(__dirname, 'games.json');
+const GAME_PREFS_PATH = path.join(__dirname, 'config/games.json');
 
 ipcMain.handle('load-game-prefs', () => {
   try { return JSON.parse(fs.readFileSync(GAME_PREFS_PATH, 'utf8')); }
