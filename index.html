@@ -502,7 +502,7 @@
 .emu-overlay.hidden { display:none; }
 .emu-modal {
   background:var(--bg2); border:1px solid var(--border); border-radius:8px;
-  width:560px; max-width:96vw; max-height:80vh; display:flex; flex-direction:column;
+  width:760px; max-width:96vw; max-height:80vh; display:flex; flex-direction:column;
   box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 .emu-modal-hdr {
@@ -530,6 +530,13 @@
   padding:3px 7px; border-radius:3px; cursor:pointer; flex-shrink:0; transition:all 0.15s;
 }
 .emu-row-edit:hover { border-color:var(--accent2); color:var(--accent2); }
+.emu-drag-handle {
+  cursor:grab; color:var(--text-dim); font-size:13px; flex-shrink:0;
+  padding:0 3px; line-height:1; user-select:none; transition:color 0.15s;
+}
+.emu-drag-handle:hover { color:var(--text-mid); }
+.emu-drag-handle:active { cursor:grabbing; }
+.emu-row.drag-over { border-color:var(--accent); background:var(--bg); }
 .emu-add-form {
   display:flex; flex-direction:column; gap:10px;
   padding-top:10px; border-top:1px solid var(--border);
@@ -2358,12 +2365,18 @@ function renderEmuList(editIdx=null) {
   const list = document.getElementById('emu-list');
   list.innerHTML = '';
   if (!S.emulators.length) { list.innerHTML = '<div class="emu-empty">Aucun émulateur configuré.</div>'; return; }
+
+  let _dragSrcIdx = null;
+
   S.emulators.forEach((emu, i) => {
     const row = document.createElement('div');
     row.className = 'emu-row' + (i===editIdx ? ' emu-row-editing' : '');
+    row.draggable = true;
+    row.dataset.idx = i;
     const cmdStr = (emu.cmdArgs||['{rom}']).join(' ');
     row.innerHTML =
-      `<span class="emu-row-label" title="${esc(emu.name)}">${esc(emu.name)}</span>`
+      `<span class="emu-drag-handle" title="Glisser pour réordonner">⠿</span>`
+      +`<span class="emu-row-label" title="${esc(emu.name)}">${esc(emu.name)}</span>`
       +`<span class="emu-row-path" title="${esc(emu.exePath)}">${esc(emu.exePath)}</span>`
       +`<span class="emu-row-path" style="color:var(--accent2);flex:0 1 auto;max-width:140px" title="${esc(cmdStr)}">${esc(cmdStr)}</span>`
       +`<button class="emu-row-edit" data-i="${i}" title="Éditer">🔽</button>`
@@ -2372,6 +2385,29 @@ function renderEmuList(editIdx=null) {
       S.emulators.splice(i,1); await saveEmulators(); renderEmuList(); _resetEmuForm();
     });
     row.querySelector('.emu-row-edit').addEventListener('click', () => _loadEmuIntoForm(i));
+
+    row.addEventListener('dragstart', e => {
+      _dragSrcIdx = i;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => row.style.opacity = '0.4', 0);
+    });
+    row.addEventListener('dragend', () => {
+      row.style.opacity = '';
+      list.querySelectorAll('.emu-row').forEach(r => r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+    row.addEventListener('dragenter', e => { e.preventDefault(); if (i !== _dragSrcIdx) row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', async e => {
+      e.preventDefault();
+      if (_dragSrcIdx === null || _dragSrcIdx === i) return;
+      const [moved] = S.emulators.splice(_dragSrcIdx, 1);
+      S.emulators.splice(i, 0, moved);
+      _dragSrcIdx = null;
+      await saveEmulators();
+      renderEmuList(editIdx);
+    });
+
     list.appendChild(row);
   });
 }
