@@ -54,7 +54,7 @@
   .load-title p { font-size:12px; color:var(--text-dim); line-height:1.7; }
 
   /* Deux panneaux côte à côte */
-  .load-panels { display:flex; gap:16px; width:100%; max-width:900px; margin-bottom: 30px; align-items:flex-start; }
+  .load-panels { display:flex; gap:40px; width:100%; max-width:850px; margin-bottom: 30px; align-items:flex-start; }
   .load-panel {
     flex:1; min-width:0; background:var(--bg2); border:2px solid #4fc97e; border-radius:16px;
     display:flex; flex-direction:column; overflow:hidden; transition:border-color 0.2s;
@@ -632,8 +632,40 @@
     flex:1; display:flex; align-items:center; justify-content:center;
     overflow:hidden; padding:8px; min-height:0;
   }
-  #snap-img { max-width:100%; max-height:100%; object-fit:contain; display:none; border-radius:2px; }
+  #snap-img { max-width:100%; max-height:100%; object-fit:contain; display:none; border-radius:2px; cursor:zoom-in; }
   #snap-empty-msg { font-size:11px; color:var(--text-dim); }
+
+  /* ─── SNAP FULLSCREEN ───────────────────────────────────────────────────── */
+  #snap-fs {
+    position:fixed; inset:0; z-index:3000;
+    background:rgba(0,0,0,0.88);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.18s ease;
+  }
+  #snap-fs.vis { opacity:1; pointer-events:all; }
+  #snap-fs-img {
+    max-width:90vw; max-height:90vh;
+    object-fit:contain; border-radius:3px;
+    box-shadow:0 20px 80px rgba(0,0,0,0.7);
+    transform-origin:center center;
+    transition:transform 0.08s ease;
+    cursor:zoom-out; user-select:none; -webkit-user-drag:none;
+  }
+  #snap-fs-close {
+    position:fixed; top:18px; right:22px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+    color:#fff; font-size:18px; line-height:1; padding:5px 10px;
+    border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace;
+    transition:background 0.15s; z-index:3001;
+  }
+  #snap-fs-close:hover { background:rgba(255,255,255,0.18); }
+  #snap-fs-zoom-lbl {
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:rgba(255,255,255,0.35);
+    font-family:'JetBrains Mono',monospace; pointer-events:none;
+    transition:opacity 0.3s;
+  }
 </style>
 </head>
 <body>
@@ -720,7 +752,7 @@
       <span id="toolbar-toggle-summary"></span>
     </div>
     <div id="search-wrap">
-      <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" spellcheck="false">
+      <input type="text" id="search" placeholder="Rechercher..." title="Recherche par nom, titre, fabricant, année" autocomplete="off" spellcheck="false">
       <button id="sch-clr">✕</button>
     </div>
     <div id="toolbar">
@@ -902,6 +934,13 @@
 
 <!-- ─── MENU CONTEXTUEL ───────────────────────────────────────────────────── -->
 <div class="ctx-menu hidden" id="ctx-menu"></div>
+
+<!-- ─── SNAP FULLSCREEN ──────────────────────────────────────────────────────── -->
+<div id="snap-fs">
+  <button id="snap-fs-close" title="Fermer (Esc)">✕</button>
+  <img id="snap-fs-img" alt="">
+  <span id="snap-fs-zoom-lbl">100%</span>
+</div>
 
 <script>
 // palettes de couleurs
@@ -2635,6 +2674,61 @@ if (url && typeof url === 'string') {
     : '<div style="text-align:center">Aucune image</div>';
 }
   };
+
+  // ── Fullscreen snap viewer ────────────────────────────────────────────────
+  (function() {
+    const fs      = document.getElementById('snap-fs');
+    const fsImg   = document.getElementById('snap-fs-img');
+    const fsClose = document.getElementById('snap-fs-close');
+    const fsLbl   = document.getElementById('snap-fs-zoom-lbl');
+    let fsScale   = 1.0;
+    let lblTimer;
+
+    function openFs() {
+      if (!img.src || img.style.display === 'none') return;
+      fsImg.src = img.src;
+      fsScale = 1.0;
+      applyScale();
+      fs.classList.add('vis');
+    }
+
+    function closeFs() {
+      fs.classList.remove('vis');
+    }
+
+    function applyScale(animate = false) {
+      fsImg.style.transition = animate ? 'transform 0.12s ease' : 'none';
+      fsImg.style.transform  = `scale(${fsScale})`;
+      const pct = Math.round(fsScale * 100) + '%';
+      fsLbl.textContent = pct;
+      fsLbl.style.opacity = '1';
+      clearTimeout(lblTimer);
+      lblTimer = setTimeout(() => { fsLbl.style.opacity = '0'; }, 1200);
+    }
+
+    img.addEventListener('click', openFs);
+
+    fsClose.addEventListener('click', e => { e.stopPropagation(); closeFs(); });
+
+    fs.addEventListener('click', e => {
+      if (e.target === fs || e.target === fsImg) closeFs();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!fs.classList.contains('vis')) return;
+      if (e.key === 'Escape') closeFs();
+      if (e.key === '+' || e.key === '=') { fsScale = Math.min(8, fsScale + 0.25); applyScale(true); }
+      if (e.key === '-')                  { fsScale = Math.max(0.1, fsScale - 0.25); applyScale(true); }
+      if (e.key === '0')                  { fsScale = 1.0; applyScale(true); }
+    });
+
+    fs.addEventListener('wheel', e => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      fsScale = Math.min(8, Math.max(0.1, fsScale + delta));
+      applyScale();
+    }, { passive: false });
+  })();
 })();
 
 // ─── NAVIGATION JOYPAD ──────────────────────────────────────────────────────────
