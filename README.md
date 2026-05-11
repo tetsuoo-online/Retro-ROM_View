@@ -11,6 +11,7 @@
 
 Load your ROM folders, drop in a MAME DAT file, and instantly get a structured view of your entire collection — what you have, what's missing, what's a duplicate, and how complete each game is down to the individual ROM files inside the ZIP.
 
+![alt text](img/2026-05-12_01_51_10-[R3TRO-ROM_VIEW_v2.6_by_Tetsuoo].png)
 ---
 
 ## 🗂️ Collection Management
@@ -25,7 +26,6 @@ Load your ROM folders, drop in a MAME DAT file, and instantly get a structured v
 - 📄 Supports **MAME XML** (`<machine>`) and **Logiqx DAT** (`<game>`) formats
 - 🔀 Load **multiple DATs simultaneously** for cross-collection compatibility checks
 - 🏷️ Enriches the game list with **titles, years, manufacturers**, parent/clone relationships
-- 🔍 Falls back to prefix-based heuristic grouping when no DAT is loaded
 
 ## 🔎 Filtering & Sorting
 
