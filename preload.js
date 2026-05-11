@@ -21,5 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onConsoleLine: (callback) => ipcRenderer.on('console-line', (_event, line) => callback(line)),
   getPathForFile:   (file) => webUtils.getPathForFile(file),
   readZipContents:  (p)    => ipcRenderer.invoke('read-zip-contents', p),
-  findSnap: (shortName) => ipcRenderer.invoke('find-snap', shortName),
+  findSnap:      (shortName) => ipcRenderer.invoke('find-snap', shortName),
+  listLangFlags: ()           => ipcRenderer.invoke('list-lang-flags'),
 });

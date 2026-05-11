@@ -1,5 +1,5 @@
 # 🕹️ Retro-ROM View
-
+![alt text](img/2026-05-12_01_37_06-[R3TRO-ROM_VIEW_v2.6_by_Tetsuoo].webp)
 > **A desktop app for browsing, organizing, and launching your retro gaming ROM collections.**
 > Built with Electron — dark-themed, fast, and designed for collectors who mean business.
 
@@ -66,7 +66,7 @@ Load your ROM folders, drop in a MAME DAT file, and instantly get a structured v
 - Switch the active DAT reference on the fly to re-check the ZIP against it
 
 ## ▶️ Emulator Integration
-
+![alt text](img/emulators.png)
 - 🕹️ Configure **any number of emulators** with a visual command-line token builder
 - 🏗️ Build your launch command with drag-to-reorder tokens: `{rom}`, `{rompath}`, custom args
 - 💡 Per-game emulator preference, saved persistently

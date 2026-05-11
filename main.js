@@ -298,3 +298,16 @@ ipcMain.handle('find-snap', async (e, shortName) => {
   }
   return null;
 });
+
+// ─── LIST LANG FLAGS ─────────────────────────────────────────────────────────
+ipcMain.handle('list-lang-flags', async () => {
+  const flagsDir = path.join(__dirname, 'config', 'lang', 'flags');
+  try {
+    const files = fs.readdirSync(flagsDir);
+    return files
+      .filter(f => f.toLowerCase().endsWith('.gif'))
+      .map(f => f.replace(/\.gif$/i, '').toLowerCase());
+  } catch {
+    return [];
+  }
+});

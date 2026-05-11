@@ -3,10 +3,10 @@ __pycache__/
 _misc/
 _temp/
 cfg/
-config/
 node_modules/
 snap/
 *.bak
+*.patch
 *.pyc
 *.zip
 *- Copie*.*

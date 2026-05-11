@@ -46,6 +46,7 @@
   .zbtn:hover { border-color:var(--accent); color:var(--accent); }
   #zoom-val { font-size:10px; color:var(--text-dim); min-width:32px; text-align:center; }
   #stats { font-size:11px; color:var(--text-dim); margin-left:auto; white-space:nowrap; }
+  #hdr-lang { display:flex; align-items:center; gap:4px; }
 
   /* LOAD SCREEN */
   #scr-load { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; overflow-y:auto; padding:20px; }
@@ -679,9 +680,9 @@
 
 <header>
   <h1>Retro-ROM <span>View</span></h1>
-  <button class="hbtn" id="hbtn-add-folder">📁 + Dossier</button>
+  <button class="hbtn" id="hbtn-add-folder">📁 + <span data-lang="btn_folder">Dossier</span></button>
   <button class="hbtn" id="hbtn-add-dat">📄 + DAT</button>
-  <button class="hbtn" id="hbtn-emulators">🕹 Émulateurs</button>
+  <button class="hbtn" id="hbtn-emulators">🕹 <span data-lang="btn_emulators">Émulateurs</span></button>
   <div class="hdr-div"></div>
   <div id="hdr-zoom">
     <span>Zoom&nbsp;</span>
@@ -689,6 +690,12 @@
     <span id="zoom-val">100%</span>
     <button class="zbtn" id="zoom-in"  title="Ctrl++">+</button>
     <button class="zbtn" id="zoom-rst" title="Ctrl+0" style="font-size:9px;width:auto;padding:0 5px">↺</button>
+  </div>
+  <div class="hdr-div"></div>
+  <div id="hdr-lang">
+    <button id="lang-fr" title="Français" onclick="setLang('fr')" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.7;transition:opacity 0.15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.7">
+      <img src="config/lang/flags/fr.gif" width="24" height="24" alt="FR" style="display:block;border-radius:2px">
+    </button>
   </div>
   <div id="stats"></div>
   <div id="hdr-loading-bar"><div id="hdr-loading-inner"></div></div>
@@ -698,7 +705,7 @@
 <div id="scr-load">
   <div class="load-title">
     <h2 style="color:var(--green);">LOAD SCREEN</h2>
-    <p>Chargez un ou plusieurs dossiers de ROMs, puis les DATs correspondants.<br>Chaque dossier sera identifié séparément dans l'analyse.</p>
+    <p><span data-lang="load_intro">Chargez un ou plusieurs dossiers de ROMs, puis les DATs correspondants.<br>Chaque dossier sera identifié séparément dans l'analyse.</span></p>
   </div>
 
   <div class="load-panels">
@@ -706,17 +713,17 @@
     <div class="load-panel" id="panel-folders">
       <div class="load-panel-hdr">
         <span class="load-panel-icon">📁</span>
-        <span class="load-panel-title">Dossier(s) de ROMs</span>
-        <span class="load-panel-step">Étape 1</span>
+        <span class="load-panel-title" data-lang="panel_folders_title">Dossier(s) de ROMs</span>
+        <span class="load-panel-step" data-lang="step1">Étape 1</span>
       </div>
       <div class="load-panel-items" id="folders-items">
         <div class="load-panel-empty" id="folders-empty">
           <span class="lpe-icon">📂</span>
-          <span>Aucun dossier chargé</span>
+          <span data-lang="no_folder_loaded">Aucun dossier chargé</span>
         </div>
       </div>
       <div class="load-panel-footer">
-        <button class="btn-add-item" id="btn-add-folder-load">＋ Ajouter un dossier</button>
+        <button class="btn-add-item" id="btn-add-folder-load" data-lang="btn_add_folder">＋ Ajouter un dossier</button>
       </div>
     </div>
 
@@ -725,16 +732,16 @@
       <div class="load-panel-hdr">
         <span class="load-panel-icon">📄</span>
         <span class="load-panel-title">DAT(s) MAME</span>
-        <span class="load-panel-step">Étape 2 — optionnel</span>
+        <span class="load-panel-step" data-lang="step2">Étape 2 — optionnel</span>
       </div>
       <div class="load-panel-items" id="dats-items">
         <div class="load-panel-empty" id="dats-empty">
           <span class="lpe-icon">📋</span>
-          <span>Glisser des fichiers DAT / XML ici</span>
+          <span data-lang="drop_dat_hint">Glisser des fichiers DAT / XML ici</span>
         </div>
       </div>
       <div class="load-panel-footer">
-        <button class="btn-add-item" id="btn-add-dat-load">＋ Ajouter un DAT</button>
+        <button class="btn-add-item" id="btn-add-dat-load" data-lang="btn_add_dat">＋ Ajouter un DAT</button>
       </div>
     </div>
   </div>
@@ -744,7 +751,7 @@
 
 <!-- PROGRESS -->
 <div id="scr-prog">
-  <div id="prog-lbl">Chargement...</div>
+  <div id="prog-lbl" data-lang="loading">Chargement...</div>
   <div id="prog-out"><div id="prog-bar"></div></div>
 </div>
 
@@ -755,40 +762,40 @@
     <div id="left-resize-handle" title="Redimensionner"></div>
     <div id="toolbar-toggle">
       <span id="toolbar-toggle-arrow">▼</span>
-      <span id="toolbar-toggle-label">Filtres &amp; tri</span>
+      <span id="toolbar-toggle-label"><span data-lang="toolbar_label">Filtres &amp; tri</span></span>
       <span id="toolbar-toggle-summary"></span>
     </div>
     <div id="search-wrap">
-      <input type="text" id="search" placeholder="Rechercher..." title="Recherche par nom, titre, fabricant, année" autocomplete="off" spellcheck="false">
+      <input type="text" id="search" placeholder="Rechercher..." data-lang-placeholder="search_placeholder" title="Recherche par nom, titre, fabricant, année" autocomplete="off" spellcheck="false">
       <button id="sch-clr">✕</button>
     </div>
     <div id="toolbar">
       <div id="filter-row">
-        <button class="fbtn on" data-f="all">Tous</button>
-        <button class="fbtn" data-f="parents" id="fb-parents" disabled>Parents</button>
-        <button class="fbtn" data-f="clones"  id="fb-clones"  disabled>Clones</button>
-        <button class="fbtn" data-f="orphans" id="fb-orphans" disabled>Orphelins</button>
-        <button class="fbtn" data-f="missing" id="fb-missing" disabled>Manquants</button>
-        <button class="fbtn" data-f="dupes">Doublons</button>
-        <button class="fbtn" data-f="multi" id="fb-multi" disabled>Multi-DAT</button>
+        <button class="fbtn on" data-f="all"><span data-lang="filter_all">Tous</span></button>
+        <button class="fbtn" data-f="parents" id="fb-parents" disabled><span data-lang="filter_parents">Parents</span></button>
+        <button class="fbtn" data-f="clones"  id="fb-clones"  disabled><span data-lang="filter_clones">Clones</span></button>
+        <button class="fbtn" data-f="orphans" id="fb-orphans" disabled><span data-lang="filter_orphans">Orphelins</span></button>
+        <button class="fbtn" data-f="missing" id="fb-missing" disabled><span data-lang="filter_missing">Manquants</span></button>
+        <button class="fbtn" data-f="dupes"><span data-lang="filter_dupes">Doublons</span></button>
+        <button class="fbtn" data-f="multi" id="fb-multi" disabled><span data-lang="filter_multidat">Multi-DAT</span></button>
       </div>
       <div id="rs-filter-row"></div>
       <div id="folder-filter-row"></div>
       <div id="sort-row">
-        <label>Tri</label>
+        <label data-lang="sort_label">Tri</label>
         <select id="sort-sel">
-          <option value="name">Nom A→Z</option>
-          <option value="desc">Titre</option>
-          <option value="clones">Nb clones</option>
-          <option value="size">Taille</option>
-          <option value="rs-count">Nb romsets</option>
+          <option value="name" data-lang="sort_name">Nom A→Z</option>
+          <option value="desc" data-lang="sort_desc">Titre</option>
+          <option value="clones" data-lang="sort_clones">Nb clones</option>
+          <option value="size" data-lang="sort_size">Taille</option>
+          <option value="rs-count" data-lang="sort_rscount">Nb romsets</option>
         </select>
         <button id="sort-rev" class="asc" title="Inverser le tri"></button>
       </div>
     </div>
     <div id="dat-bar"></div>
     <div class="toolbar-hide-row" style="padding:5px 11px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <label><input type="checkbox" id="chk-hide-tags"> Cacher DATs / Dossiers dans les résultats</label>
+      <label><input type="checkbox" id="chk-hide-tags"> <span data-lang="hide_tags">Cacher DATs / Dossiers dans les résultats</span></label>
     </div>
     <div id="list-sep"></div>
     <div id="list-count-bar">
@@ -804,7 +811,7 @@
       </div>
       <div id="snap-body">
         <img id="snap-img" alt="">
-        <span id="snap-empty-msg">Sélectionne un jeu</span>
+        <span id="snap-empty-msg" data-lang="select_game">Sélectionne un jeu</span>
       </div>
     </div>
   </div>
@@ -812,11 +819,11 @@
   <!-- DÉTAIL -->
   <div id="middle">
     <div id="middle-filter-bar">
-      <select id="det-emu-sel" disabled><option>Aucun émulateur</option></select>
+      <select id="det-emu-sel" disabled><option data-lang="no_emulator">Aucun émulateur</option></select>
       <div id="mfb-right">
         <label title="Appliquer le filtre dossier actif au panneau détail">
           <input type="checkbox" id="chk-filters-enabled" checked>
-          <span>Appliquer filtres</span>
+          <span data-lang="apply_filters">Appliquer filtres</span>
         </label>
       </div>
     </div>
@@ -826,7 +833,7 @@
         <line x1="8" y1="21" x2="16" y2="21"/>
         <line x1="12" y1="17" x2="12" y2="21"/>
       </svg>
-      Sélectionne un jeu
+      <span data-lang="select_game">Sélectionne un jeu</span>
     </div>
     <div id="det-hdr">
       <div id="det-title"></div>
@@ -840,7 +847,7 @@
         <span id="console-bar-arrow">▼</span>
         <span id="console-bar-title">CONSOLE</span>
         <span id="console-bar-status"></span>
-        <button class="cbtn" id="cbtn-clear" title="Effacer">Effacer</button>
+        <button class="cbtn" id="cbtn-clear" title="Effacer" data-lang="btn_clear">Effacer</button>
         <button class="cbtn" id="cbtn-top"   title="Haut">↑</button>
         <button class="cbtn" id="cbtn-bot"   title="Bas">↓</button>
       </div>
@@ -857,7 +864,7 @@
       <button class="panel-collapse-btn" id="zip-collapse-btn">▶</button>
     </div>
     <div id="zip-panel-empty">
-      <span>← Sélectionne<br>un jeu</span>
+      <span data-lang="select_game_arrow">← Sélectionne<br>un jeu</span>
     </div>
     <div id="zip-panel-body" style="display:none"></div>
     <div id="zip-collapsed-tab" class="panel-collapsed-tab">
@@ -870,62 +877,62 @@
   <div id="rs-panel">
     <div id="rs-resize-handle" title="Redimensionner"></div>
     <div id="rs-panel-hdr">
-      <span>Compatibilité</span>
+      <span data-lang="compat_title">Compatibilité</span>
       <span id="rs-panel-name" style="color:var(--text-dim);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-left:6px"></span>
       <button class="panel-collapse-btn" id="rs-collapse-btn">▶</button>
     </div>
     <div id="rs-panel-empty">
-      <span>← Sélectionne<br>un jeu</span>
+      <span data-lang="select_game_arrow">← Sélectionne<br>un jeu</span>
     </div>
     <div id="rs-panel-body" style="display:none"></div>
     <div id="rs-collapsed-tab" class="panel-collapsed-tab">
       <span class="pct-arrow">◀</span>
-      <span class="pct-label">Compat.</span>
+      <span class="pct-label" data-lang="compat_short">Compat.</span>
     </div>
   </div>
 </div>
 
 <div id="exp-bar">
   <span id="exp-count"></span>
-  <button class="btn-exp" id="btn-export-list">Exporter la liste</button>
-  <button class="btn-exp" id="btn-trash-marked" style="background:var(--red)">🗑 Corbeille</button>
-  <button class="btn-clr" id="btn-clear-marked">Tout désélectionner</button>
+  <button class="btn-exp" id="btn-export-list" data-lang="btn_export_list">Exporter la liste</button>
+  <button class="btn-exp" id="btn-trash-marked" style="background:var(--red)"><span data-lang="btn_trash">🗑 Corbeille</span></button>
+  <button class="btn-clr" id="btn-clear-marked" data-lang="btn_deselect_all">Tout désélectionner</button>
 </div>
 
 <!-- ─── MODAL ÉMULATEURS ──────────────────────────────────────────────────── -->
 <div class="emu-overlay hidden" id="emu-overlay">
   <div class="emu-modal">
     <div class="emu-modal-hdr">
-      <h2>🕹 Émulateurs</h2>
+      <h2>🕹 <span data-lang="modal_emulators_title">Émulateurs</span></h2>
       <button class="zbtn" id="emu-close" title="Fermer">✕</button>
     </div>
     <div class="emu-modal-body">
       <div style="font-size:10px;color:var(--text-dim);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 12px;margin-bottom:10px;line-height:1.7">
-        💡 Compose la ligne de commande avec des tokens ordonnés.<br>
-        <code style="color:var(--accent)">{rom}</code> = shortname du jeu &nbsp;·&nbsp;
-        <code style="color:var(--accent2)">{rompath}</code> = dossier du fichier ROM &nbsp;·&nbsp;
-        Les autres tokens sont des args littéraux (ex. <code style="color:var(--text-mid)">-fs</code>, <code style="color:var(--text-mid)">1</code>).
+        <span data-lang="emu_help_line1">💡 Compose la ligne de commande avec des tokens ordonnés.</span><br>
+        <code style="color:var(--accent)">{rom}</code> = <span data-lang="emu_help_rom">shortname du jeu</span> &nbsp;·&nbsp;
+        <code style="color:var(--accent2)">{rompath}</code> = <span data-lang="emu_help_rompath">dossier du fichier ROM</span> &nbsp;·&nbsp;
+        <span data-lang="emu_help_args">Les autres tokens sont des args littéraux (ex. <code style="color:var(--text-mid)">-fs</code>, <code style="color:var(--text-mid)">1</code>).</span>
       </div>
       <div class="emu-list" id="emu-list"></div>
       <div class="emu-add-form">
         <div class="emu-add-form-row">
           <div>
-            <label for="emu-name-input">Nom / Version</label>
+            <label for="emu-name-input" data-lang="emu_name_label">Nom / Version</label>
             <input class="emu-input" id="emu-name-input" type="text" placeholder="ex: MAME 0.272" autocomplete="off">
           </div>
           <div>
-            <label>Exécutable</label>
+            <label data-lang="emu_exe_label">Exécutable</label>
             <div class="emu-path-wrap">
               <input class="emu-input" id="emu-path-input" type="text" placeholder="C:\mame\mame.exe" autocomplete="off">
-              <button class="emu-browse" id="emu-browse">Parcourir</button>
+              <button class="emu-browse" id="emu-browse" data-lang="btn_browse">Parcourir</button>
             </div>
           </div>
         </div>
         <div>
-          <label>Ordre des arguments <span style="opacity:.5;font-weight:400">— glisser ↑↓ pour réordonner</span></label>
+          <label><span data-lang="emu_args_label">Ordre des arguments</span> <span style="opacity:.5;font-weight:400" data-lang="emu_args_hint">— glisser ↑↓ pour réordonner</span></label>
           <div class="emu-tokens" id="emu-tokens-list"></div>
           <div class="emu-token-row" style="margin-top:6px">
-            <input class="emu-input emu-token-input" id="emu-arg-input" type="text" placeholder="arg littéral ex: -fs  ou  1" autocomplete="off">
+            <input class="emu-input emu-token-input" id="emu-arg-input" type="text" placeholder="arg littéral ex: -fs  ou  1" data-lang-placeholder="emu_arg_placeholder" autocomplete="off">
             <button class="emu-token-shortcut" id="emu-tok-add-arg" title="Ajouter l'arg saisi">+ Arg</button>
             <button class="emu-token-shortcut" id="emu-tok-rom"     title="Insérer {rom}">{rom}</button>
             <button class="emu-token-shortcut" id="emu-tok-rompath" title="Insérer {rompath}" style="color:var(--accent2);border-color:var(--accent2)44">{rompath}</button>
@@ -950,6 +957,50 @@
 </div>
 
 <script>
+// ─── LANG ────────────────────────────────────────────────────────────────────
+const LANG = {};
+async function loadLang(code) {
+  try {
+    const text = await fetch(`config/lang/${code}.md`).then(r => r.text());
+    text.split('\n').forEach(line => {
+      const m = line.match(/^##\s+(\w+)\s*:\s*(.+)$/);
+      if (m) LANG[m[1]] = m[2].trim();
+    });
+  } catch(e) { console.warn('Lang load failed', e); }
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    const key = el.getAttribute('data-lang');
+    if (LANG[key] !== undefined) {
+      if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+        el.placeholder = LANG[key];
+      } else {
+        el.innerHTML = LANG[key];
+      }
+    }
+  });
+  // placeholder inputs with data-lang-placeholder
+  document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-lang-placeholder');
+    if (LANG[key] !== undefined) el.placeholder = LANG[key];
+  });
+  // Re-render dynamic text that embeds LANG values
+  if (S.groups.length) { updateStats(); renderList(); if (S.activeId) openGroup(S.activeId); }
+}
+
+async function setLang(code) {
+  await loadLang(code);
+  applyLang();
+  S._lang = code;
+  await window.electronAPI.saveSettings({ lang: code });
+  // Highlight active flag
+  document.querySelectorAll('#hdr-lang button').forEach(btn => {
+    btn.style.opacity = btn.title.toLowerCase() === code ? '1' : '0.7';
+  });
+}
+
+
 // palettes de couleurs
 const FOLDER_COLORS = ['#5b8ef0','#4fc97e','#e8a045','#e85555','#c97be8','#f0c030','#50c8c8','#f080a0'];
 const DAT_COLORS    = ['#815725','#e8a045','#ffe631','#4fc97e','#50b2c8','#5b8ef0','#7b28ff','#c97be8','#f080a0','#e85555'];
@@ -1059,11 +1110,11 @@ function updateFolderChips() {
       item.className = 'lp-item' + (fd.disabled ? ' disabled' : '');
       item.dataset.id = fd.id;
       item.innerHTML = `
-        <button class="lp-toggle ${fd.disabled ? 'off' : 'on'}" title="${fd.disabled ? 'Activer' : 'Désactiver'}">${fd.disabled ? '' : '✓'}</button>
+        <button class="lp-toggle ${fd.disabled ? 'off' : 'on'}" title="${fd.disabled ? LANG.btn_enable||'Activer' : LANG.btn_disable||'Désactiver'}">${fd.disabled ? '' : '✓'}</button>
         <div class="lp-dot" style="background:${fd.color}"></div>
         <span class="lp-name" title="${esc(fd.folderPath || fd.name)}">${esc(fd.name)}</span>
         <span class="lp-count">${fd.files.length}</span>
-        <span class="lp-x" title="Retirer">✕</span>`;
+        <span class="lp-x" title="${LANG.btn_remove||'Retirer'}">✕</span>`;
 
       item.querySelector('.lp-toggle').addEventListener('click', () => {
         fd.disabled = !fd.disabled;
@@ -1102,11 +1153,11 @@ function refreshDatCard() {
       item.dataset.id = d.id;
       const gameCount = d.games ? d.games.size : 0;
       item.innerHTML = `
-        <button class="lp-toggle ${d.disabled ? 'off' : 'on'}" style="${d.disabled ? '' : `color:${d.color};border-color:${d.color};background:${d.color}18`}" title="${d.disabled ? 'Activer' : 'Désactiver'}">${d.disabled ? '' : '✓'}</button>
+        <button class="lp-toggle ${d.disabled ? 'off' : 'on'}" style="${d.disabled ? '' : `color:${d.color};border-color:${d.color};background:${d.color}18`}" title="${d.disabled ? LANG.btn_enable||'Activer' : LANG.btn_disable||'Désactiver'}">${d.disabled ? '' : '✓'}</button>
         <div class="lp-dot" style="background:${d.color}"></div>
         <span class="lp-name" style="color:${d.color}" title="${esc(d.label)}">${esc(d.label)}</span>
         <span class="lp-count">${gameCount}</span>
-        <span class="lp-x" title="Retirer">✕</span>`;
+        <span class="lp-x" title="${LANG.btn_remove||'Retirer'}">✕</span>`;
 
       item.querySelector('.lp-toggle').addEventListener('click', () => {
         d.disabled = !d.disabled;
@@ -1190,9 +1241,9 @@ async function buildApp() {
   }
 
   await tick(); detectDupes();
-  if (!inApp) prog(25, 'Construction des groupes...');
+  if (!inApp) prog(25, LANG.prog_building||'Construction des groupes...');
   await tick(); buildGroups();
-  if (!inApp) prog(65, 'Indexation...');
+  if (!inApp) prog(65, LANG.prog_indexing||'Indexation...');
   await tick();
   const hasDat = getActiveDats().length > 0;
   ['fb-parents','fb-clones','fb-orphans','fb-missing'].forEach(id =>
@@ -1202,7 +1253,7 @@ async function buildApp() {
   applyFilterSort();
 
   if (!inApp) {
-    prog(100, 'Prêt !');
+    prog(100, LANG.prog_ready||'Prêt !');
     await tick(300);
     setScreen('app');
   }
@@ -1212,7 +1263,7 @@ async function buildApp() {
   document.getElementById('empty-msg').style.display='flex';
   document.getElementById('rs-panel-empty').style.display='flex';
   document.getElementById('rs-panel-body').style.display='none';
-  document.getElementById('zip-panel-empty').innerHTML='<span>← Sélectionne<br>un jeu</span>';
+  document.getElementById('zip-panel-empty').innerHTML=`<span>${LANG.select_game_arrow||'← Sélectionne<br>un jeu'}</span>`;
   document.getElementById('zip-panel-empty').style.display='flex';
   document.getElementById('zip-panel-body').style.display='none';
   document.getElementById('zip-panel-name').textContent='';
@@ -1342,7 +1393,7 @@ function buildRsFilterRow() {
     btn.addEventListener('click',()=>{ S.rsFilter=d.id; buildRsFilterRow(); S.renderLimit=250; applyFilterSort(); });
 
     const x=document.createElement('button'); x.className='fbtn-grp-x'; x.textContent='✕';
-    x.title='Retirer ce DAT';
+    x.title=LANG.btn_remove_dat||'Retirer ce DAT';
     x.addEventListener('click',()=>{
       S.dats=S.dats.filter(dd=>dd.id!==d.id);
       if(S.rsFilter===d.id) S.rsFilter=null;
@@ -1373,7 +1424,7 @@ function buildFolderFilterRow() {
     btn.addEventListener('click',()=>{ S.folderFilter=fd.id; buildFolderFilterRow(); S.renderLimit=250; applyFilterSort(); });
 
     const x=document.createElement('button'); x.className='fbtn-grp-x'; x.textContent='✕';
-    x.title='Retirer ce dossier';
+    x.title=LANG.btn_remove_folder||'Retirer ce dossier';
     x.addEventListener('click',()=>{ removeFolder(fd.id); });
 
     grp.appendChild(btn); grp.appendChild(x); row.appendChild(grp);
@@ -1388,14 +1439,14 @@ function updateStats() {
   const dupes=all.filter(f=>f.isDupe).length;
   const activeFolders=S.folders.filter(f=>!f.disabled);
   let txt=`${total.toLocaleString()} ROMs · ${fmtSize(totalSz)}`;
-  if(activeFolders.length>1) txt+=` · ${activeFolders.length} dossiers`;
-  if(dupes>0) txt+=` · ⚠ ${dupes} doublons`;
+  if(activeFolders.length>1) txt+=` · ${activeFolders.length} ${LANG.stat_folders||'dossiers'}`;
+  if(dupes>0) txt+=` · ⚠ ${dupes} ${LANG.stat_dupes||'doublons'}`;
   if(activeDats.length>0){
     const allDatNames=new Set(); activeDats.forEach(d=>d.games.forEach((_,k)=>allDatNames.add(k)));
     const matched=all.filter(f=>allDatNames.has(f.nameNoExt)).length;
     const orphans=total-matched;
-    txt+=` · ${matched}/${total} matchés · ${activeDats.length} DAT${activeDats.length>1?'s':''}`;
-    if(orphans>0) txt+=` · ${orphans} orphelins`;
+    txt+=` · ${matched}/${total} ${LANG.stat_matched||'matchés'} · ${activeDats.length} DAT${activeDats.length>1?'s':''}`;
+    if(orphans>0) txt+=` · ${orphans} ${LANG.stat_orphans||'orphelins'}`;
   }
   document.getElementById('stats').textContent=txt;
 }
@@ -1442,7 +1493,7 @@ function renderList(){
   const container=document.getElementById('rom-list');
   const countEl=document.getElementById('list-count');
   const total=S.filtered.length, shown=Math.min(total,S.renderLimit);
-  countEl.textContent=S.search?`${total} jeu${total!==1?'x':''} sur ${S.groups.length}`:`${total} jeu${total!==1?'x':''}`;
+  countEl.textContent=S.search?`${total} ${total!==1?LANG.stat_game_many||'jeux':LANG.stat_game_one||'jeu'} / ${S.groups.length}`:`${total} ${total!==1?LANG.stat_game_many||'jeux':LANG.stat_game_one||'jeu'}`;
   container.innerHTML='';
   const frag=document.createDocumentFragment();
 
@@ -1453,8 +1504,8 @@ function renderList(){
 
     const badges=[];
     if(S.dats.length>0){
-      if(g.isOrphan)              badges.push(`<span class="bdg bdg-orph">orphelin</span>`);
-      else if(!g.hasInCollection) badges.push(`<span class="bdg bdg-miss">manquant</span>`);
+      if(g.isOrphan)              badges.push(`<span class="bdg bdg-orph">${LANG.badge_orphan||'orphelin'}</span>`);
+      else if(!g.hasInCollection) badges.push(`<span class="bdg bdg-miss">${LANG.badge_missing||'manquant'}</span>`);
       else                        badges.push(`<span class="bdg bdg-ok">✓</span>`);
     }
     if(g.clones.length>0) badges.push(`<span class="bdg bdg-n">+${g.clones.length}</span>`);
@@ -1501,7 +1552,7 @@ function renderList(){
       if (!file) return;
       const romDir = file.path ? file.path.replace(/[\/\\][^\/\\]+$/, '') : '';
       const r = await window.electronAPI.launchEmulator({ exePath: emu.exePath, resolvedArgs: buildArgs(emu, file.nameNoExt, romDir) });
-      if (!r.ok) alert('Erreur lancement :\n' + r.error);
+      if (!r.ok) alert((LANG.launch_error||'Erreur lancement :')+`\n`+r.error);
     });
     frag.appendChild(div);
   });
@@ -1509,7 +1560,7 @@ function renderList(){
   if(total>shown){
     const more=document.createElement('div');
     more.className='load-more';
-    more.textContent=`Afficher ${Math.min(250,total-shown)} de plus… (${total-shown} restants)`;
+    more.textContent=`${LANG.load_more_prefix||'Afficher'} ${Math.min(250,total-shown)} ${LANG.load_more_suffix||'de plus…'} (${total-shown} ${LANG.load_more_remaining||'restants'})`;
     more.addEventListener('click',()=>{ S.renderLimit+=250; renderList(); });
     frag.appendChild(more);
   }
@@ -1568,7 +1619,7 @@ function openGroup(id){
   if(g.desc&&g.shortName!==g.desc) meta.push(`<span>🔑 ${g.shortName}</span>`);
   if(g.year) meta.push(`<span>📅 ${g.year}</span>`);
   if(g.mfr)  meta.push(`<span>🏭 ${esc(g.mfr)}</span>`);
-  if(g.isOrphan) meta.push(`<span style="color:var(--red)">⚠ Absent de tous les DATs</span>`);
+  if(g.isOrphan) meta.push(`<span style="color:var(--red)">⚠ ${LANG.meta_orphan||'Absent de tous les DATs'}</span>`);
   document.getElementById('det-meta').innerHTML=meta.join('');
 
   // Sélecteur émulateur préféré (dans la barre du panneau central)
@@ -1577,7 +1628,7 @@ function openGroup(id){
     if (!sel) return;
     sel.innerHTML = '';
     if (!S.emulators.length) {
-      const opt = document.createElement('option'); opt.textContent = 'Aucun émulateur'; sel.appendChild(opt);
+      const opt = document.createElement('option'); opt.textContent = LANG.no_emulator||'Aucun émulateur'; sel.appendChild(opt);
       sel.disabled = true;
     } else {
       sel.disabled = false;
@@ -1601,9 +1652,9 @@ function openGroup(id){
 
   // alertes
   if(g.isOrphan)
-    body.appendChild(makeAlert('al-err','❌ Absent de tous les DATs chargés.'));
+    body.appendChild(makeAlert('al-err',(LANG.alert_absent_dats||'❌ Absent de tous les DATs chargés.')));
   if(S.dats.length>0&&!g.isOrphan&&!g.hasInCollection)
-    body.appendChild(makeAlert('al-info','ℹ Vous n\'avez pas le fichier parent de ce jeu.'));
+    body.appendChild(makeAlert('al-info',(LANG.alert_no_parent||'ℹ Vous n\'avez pas le fichier parent de ce jeu.')));
 
   // Fichiers
   const ownFiles=[
@@ -1615,7 +1666,7 @@ function openGroup(id){
     const sec=document.createElement('div');
     const tbl=document.createElement('table'); tbl.className='rtbl';
     const showFolderCol = S.folders.length > 1;
-    tbl.innerHTML=`<thead><tr><th class="col-fav" title="Favori">🌟</th><th>Fichier</th><th>Rôle</th>${showFolderCol?'<th>Dossier</th>':''}<th>Taille</th><th>Chemin</th><th></th></tr></thead>`;
+    tbl.innerHTML=`<thead><tr><th class="col-fav" title="${LANG.col_fav||'Favori'}">🌟</th><th>${LANG.col_file||'Fichier'}</th><th>${LANG.col_role||'Rôle'}</th>${showFolderCol?`<th>${LANG.col_folder||'Dossier'}</th>`:''}<th>${LANG.col_size||'Taille'}</th><th>${LANG.col_path||'Chemin'}</th><th></th></tr></thead>`;
     const tbody=document.createElement('tbody');
     ownFiles.forEach(f=>{
       const tr=document.createElement('tr');
@@ -1634,7 +1685,7 @@ function openGroup(id){
         <td>${roleBadge}${f.cloneShort?` <span style="color:var(--text-dim);font-size:10px">${esc(f.cloneShort)}</span>`:''}</td>
         ${folderCell}
         <td class="col-sz">${f.sizeStr}</td>
-        <td class="col-path" data-reveal-path="${esc(f.path)}" title="Double-clic : révéler dans l'explorateur&#10;${esc(f.path)}">${esc(pathShort)}</td>
+        <td class="col-path" data-reveal-path="${esc(f.path)}" title="${LANG.dblclick_reveal||'Double-clic : révéler dans l\'explorateur'}&#10;${esc(f.path)}">${esc(pathShort)}</td>
         <td class="col-act">
           <button class="del-btn ${isMarked?'undo':''}" data-path="${esc(f.path)}">${isMarked?'↩':'✕'}</button>
           <button class="open-btn" data-open="${esc(f.path)}" title="Ouvrir">↗</button>
@@ -1685,35 +1736,35 @@ function openGroup(id){
     } else {
       tbody.querySelector(`tr[data-zip-path="${CSS.escape(S.activeZipPath)}"]`)?.classList.add('zip-sel-row');
     }
-    const {sec: secF, inner: innerF} = makeSec(`Fichiers (${ownFiles.length})`, 'sec-files');
+    const {sec: secF, inner: innerF} = makeSec(`${LANG.section_files||'Fichiers'} (${ownFiles.length})`, 'sec-files');
     innerF.appendChild(tbl); body.appendChild(secF);
   } else if(!g.isOrphan){
-    body.appendChild(makeAlert('al-info','ℹ Aucun fichier pour ce jeu.'));
+    body.appendChild(makeAlert('al-info',(LANG.alert_no_files||'ℹ Aucun fichier pour ce jeu.')));
   }
 
   if (getActiveDats().length>0&&g.clones.length>0){
     const present=g.clones.filter(c=>c.files.length>0);
     const missing=g.clones.filter(c=>c.files.length===0);
     if(present.length>0){
-      const {sec, inner: secInner} = makeSec(`Clones présents (${present.length})`, 'sec-clones-ok');
+      const {sec, inner: secInner} = makeSec(`${LANG.clones_present||'Clones présents'} (${present.length})`, 'sec-clones-ok');
       present.slice(0,50).forEach(c=>{
         const d=document.createElement('div'); d.className='clone-item';
         const rsTags=c.rsMatches.map(m=>`<span class="rs-tag" style="background:${m.dat.color}20;color:${m.dat.color};border:1px solid ${m.dat.color}40">${m.dat.label}</span>`).join('');
         d.innerHTML=`<span class="bdg bdg-ok">✓</span><span class="ci-name">${esc(c.shortName)}</span><span class="ci-desc">${esc(c.desc||'')}</span>${c.year?`<span style="color:var(--text-dim);font-size:10px;white-space:nowrap">${c.year}</span>`:''}<span style="display:flex;gap:3px">${rsTags}</span>`;
         secInner.appendChild(d);
       });
-      if(present.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… et ${present.length-50} autres`; secInner.appendChild(m); }
+      if(present.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… ${LANG.and_more_prefix||'et'} ${present.length-50} ${LANG.and_more_suffix||'autres'}`; secInner.appendChild(m); }
       body.appendChild(sec);
     }
     if(missing.length>0){
-      const {sec, inner: secInner} = makeSec(`Clones manquants (${missing.length})`, 'sec-clones-miss');
+      const {sec, inner: secInner} = makeSec(`${LANG.clones_missing||'Clones manquants'} (${missing.length})`, 'sec-clones-miss');
       missing.slice(0,50).forEach(c=>{
         const d=document.createElement('div'); d.className='clone-item';
         const rsTags=c.rsMatches.map(m=>`<span class="rs-tag" style="background:${m.dat.color}20;color:${m.dat.color};border:1px solid ${m.dat.color}40">${m.dat.label}</span>`).join('');
         d.innerHTML=`<span class="bdg bdg-miss">absent</span><span class="ci-name">${esc(c.shortName)}</span><span class="ci-desc">${esc(c.desc||'')}</span>${c.year?`<span style="color:var(--text-dim);font-size:10px;white-space:nowrap">${c.year}</span>`:''}<span style="display:flex;gap:3px">${rsTags}</span>`;
         secInner.appendChild(d);
       });
-      if(missing.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… et ${missing.length-50} autres`; secInner.appendChild(m); }
+      if(missing.length>50){ const m=document.createElement('div'); m.style.cssText='font-size:10px;color:var(--text-dim);padding:4px 10px'; m.textContent=`… ${LANG.and_more_prefix||'et'} ${missing.length-50} ${LANG.and_more_suffix||'autres'}`; secInner.appendChild(m); }
       body.appendChild(sec);
     }
   }
@@ -1734,7 +1785,7 @@ function updateRsPanel(g) {
   const activeDats = getActiveDats();
 
   if (activeDats.length === 0) {
-    panelEmpty.innerHTML='<span>Charge des DATs<br>pour voir le détail</span>';
+    panelEmpty.innerHTML=`<span>${LANG.rs_load_dats||'Charge des DATs<br>pour voir le détail'}</span>`;
     panelEmpty.style.display='flex'; panelBody.style.display='none'; return;
   }
   // Choisir le DAT actif par défaut : premier DAT où le jeu est présent
@@ -1752,7 +1803,7 @@ function updateRsPanel(g) {
     renderRsPanelDat(panelBody, g, activeDat);
   } else {
     const abs=document.createElement('div'); abs.className='rsp-absent';
-    abs.innerHTML='<span style="color:var(--text-dim)">Absent de tous les romsets</span>';
+    abs.innerHTML=`<span style="color:var(--text-dim)">${LANG.rs_absent_all||'Absent de tous les romsets'}</span>`;
     panelBody.appendChild(abs);
   }
 }
@@ -1770,10 +1821,10 @@ function renderRsPanelDat(container, g, dat) {
   <!-- if (gd.desc && gd.desc!==gd.name) rows.push(['Titre',gd.desc]); -->
   <!-- if (gd.year) rows.push(['Année',gd.year]); -->
   <!-- if (gd.mfr)  rows.push(['Fabricant',gd.mfr]); -->
-  if (gd.cloneof) rows.push(['Clone de',gd.cloneof]);
-  if (gd.clones?.length) rows.push(['Variantes',gd.clones.length]);
+  if (gd.cloneof) rows.push([LANG.compat_clone_of, gd.cloneof]);
+  if (gd.clones?.length) rows.push([LANG.compat_variants, gd.clones.length]);
   const romTotalSz=gd.roms?gd.roms.reduce((s,r)=>s+r.size,0):0;
-  if (romTotalSz) rows.push(['Taille DAT',fmtSize(romTotalSz)]);
+  if (romTotalSz) rows.push([LANG.compat_size, fmtSize(romTotalSz)]);
   let mh=`<div class="rsp-meta">`;
   rows.forEach(([k,v])=>{ mh+=`<span class="rsp-meta-k">${k}</span><span class="rsp-meta-v">${esc(String(v))}</span>`; });
   mh+=`</div>`;
@@ -1797,7 +1848,7 @@ function renderRsPanelDat(container, g, dat) {
   hdr.style.cssText+='display:flex;align-items:center;justify-content:space-between;gap:6px;';
   const hdrLeft=document.createElement('span'); hdrLeft.textContent=`ROMs (${gd.roms.length})`;
   const hdrRight=document.createElement('span'); hdrRight.style.cssText='display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text-dim);';
-  hdrRight.innerHTML=`<span>${ownRoms.length} propres · ${mergedRoms.length} héritées</span>`;
+  hdrRight.innerHTML=`<span>${ownRoms.length} ${LANG.roms_own||'propres'} · ${mergedRoms.length} ${LANG.roms_inherited||'héritées'}</span>`;
   hdrRight.appendChild(sortBtn);
   hdr.appendChild(hdrLeft); hdr.appendChild(hdrRight);
 
@@ -1894,19 +1945,19 @@ async function updateZipPanel(g) {
   panelName.textContent = selFile ? selFile.name : '';
 
   if (!selFile) {
-    panelEmpty.innerHTML = '<span>Aucun fichier<br>ZIP pour ce jeu</span>';
+    panelEmpty.innerHTML = `<span>${LANG.no_zip_file||'Aucun fichier<br>ZIP pour ce jeu'}</span>`;
     panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
     return;
   }
 
   if (selFile.ext !== 'zip') {
-    panelEmpty.innerHTML = `<span style="font-size:10px;color:var(--text-dim);text-align:center;padding:10px">${esc(selFile.name)}<br><span style="opacity:0.5">Fichier non ZIP</span></span>`;
+    panelEmpty.innerHTML = `<span style="font-size:10px;color:var(--text-dim);text-align:center;padding:10px">${esc(selFile.name)}<br><span style="opacity:0.5">${LANG.not_zip_file||'Fichier non ZIP'}</span></span>`;
     panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
     return;
   }
 
   // Show loading
-  panelEmpty.innerHTML = '<span style="font-size:10px;color:var(--text-dim)">⏳ Lecture…</span>';
+  panelEmpty.innerHTML = `<span style="font-size:10px;color:var(--text-dim)">${LANG.zip_reading||'⏳ Lecture…'}</span>`;
   panelEmpty.style.display = 'flex'; panelBody.style.display = 'none';
 
   const result = await window.electronAPI.readZipContents(selFile.path);
@@ -1941,7 +1992,12 @@ function renderZipPanel(container, entries, datGame) {
 
   // Column header
   const hdrRow = document.createElement('div'); hdrRow.className = 'zip-hdr-row';
-  hdrRow.innerHTML = '<span>Fichier</span><span>Taille</span><span>CRC</span><span></span>';
+  hdrRow.innerHTML = `
+  <span>${LANG.zip_col_file}</span>
+  <span>${LANG.zip_col_size}</span>
+  <span>CRC</span>
+  <span></span>
+`;
   container.appendChild(hdrRow);
 
   // Sort entries alphabetically
@@ -1969,7 +2025,7 @@ function renderZipPanel(container, entries, datGame) {
       }
     } else {
       statusClass = 'zip-entry-extra';
-      icon = `<span class="zip-icon" style="color:var(--accent)" title="Non référencé dans le DAT">+</span>`;
+      icon = `<span class="zip-icon" style="color:var(--accent)" title=LANG.zip_not_in_dat||'Non référencé dans le DAT'>+</span>`;
       nExtra++;
     }
 
@@ -1993,7 +2049,7 @@ function renderZipPanel(container, entries, datGame) {
         <span class="zip-miss-fn">${esc(r.romName)}</span>
         <span class="zip-sz">${fmtSize(r.size)}</span>
         <span class="zip-crc">${r.crc || '—'}</span>
-        <span class="zip-icon" style="color:var(--text-dim)" title="Attendu dans le DAT mais absent du ZIP">↓</span>`;
+        <span class="zip-icon" style="color:var(--text-dim)" title=LANG.zip_expected_missing||'Attendu dans le DAT mais absent du ZIP'>↓</span>`;
       container.appendChild(row);
     }
   });
@@ -2003,9 +2059,9 @@ function renderZipPanel(container, entries, datGame) {
   if (nOk)    parts.push(`<span class="zip-bdg zip-bdg-ok">✓ ${nOk}</span>`);
   if (nBad)   parts.push(`<span class="zip-bdg zip-bdg-bad">✗ ${nBad} bad CRC</span>`);
   if (nExtra) parts.push(`<span class="zip-bdg zip-bdg-extra">+${nExtra} extra</span>`);
-  if (nMiss)  parts.push(`<span class="zip-bdg zip-bdg-miss">↓ ${nMiss} manquant${nMiss > 1 ? 's' : ''}</span>`);
+  if (nMiss)  parts.push(`<span class="zip-bdg zip-bdg-miss">↓ ${nMiss} ${LANG.zip_missing||'manquant'}${nMiss > 1 ? 's' : ''}</span>`);
   if (!parts.length) {
-    parts.push(`<span style="font-size:10px;color:var(--text-dim)">${entries.length} fichier${entries.length > 1 ? 's' : ''}${datGame ? '' : ' — aucun DAT'}</span>`);
+    parts.push(`<span style="font-size:10px;color:var(--text-dim)">${entries.length} fichier${entries.length > 1 ? 's' : ''}${datGame ? '' : ` — ${LANG.zip_no_dat||'aucun DAT'}`}</span>`);
   }
   sumDiv.innerHTML = parts.join('');
 }
@@ -2019,7 +2075,7 @@ function clearMarked(){ S.toDelete.clear(); updateExportBar(); if(S.activeId) op
 function updateExportBar(){
   const bar=document.getElementById('exp-bar'), n=S.toDelete.size;
   bar.classList.toggle('vis',n>0);
-  document.getElementById('exp-count').textContent=`${n} fichier${n>1?'s':''} marqué${n>1?'s':''} pour suppression`;
+  document.getElementById('exp-count').textContent=`${n} ${LANG.exp_file||'fichier'}${n>1?'s':''} ${LANG.exp_marked||'marqué'}${n>1?'s':''} ${LANG.exp_for_deletion||'pour suppression'}`;
 }
 async function exportList(){
   const content=[...S.toDelete].sort().join('\n');
@@ -2028,7 +2084,7 @@ async function exportList(){
 async function trashMarked(){
   const paths=[...S.toDelete];
   if(!paths.length) return;
-  if(!confirm(`Envoyer ${paths.length} fichier${paths.length>1?'s':''} à la corbeille ?`)) return;
+  if(!confirm(`${LANG.confirm_trash_prefix||'Envoyer'} ${paths.length} ${LANG.confirm_trash_file||'fichier'}${paths.length>1?'s':''} ${LANG.confirm_trash_suffix||'à la corbeille ?'}`)) return;
   const {errors}=await window.electronAPI.trashFiles(paths);
   if(errors.length) alert('Erreurs :\n'+errors.map(e=>e.path+'\n'+e.error).join('\n'));
   S.toDelete.clear(); updateExportBar(); if(S.activeId) openGroup(S.activeId);
@@ -2222,6 +2278,32 @@ document.getElementById('chk-filters-enabled')?.addEventListener('change', e => 
   document.getElementById('search').addEventListener('input',updateSummary);
 })();
 
+// ─── LANG BAR ────────────────────────────────────────────────────────────────
+async function initLangBar() {
+  const codes = await window.electronAPI.listLangFlags();
+  const bar = document.getElementById('hdr-lang');
+  bar.innerHTML = '';
+  codes.forEach(code => {
+    const btn = document.createElement('button');
+    btn.title = code.toUpperCase();
+    btn.style.cssText = 'background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.7;transition:opacity 0.15s';
+    btn.onmouseenter = () => btn.style.opacity = '1';
+    btn.onmouseleave = () => btn.style.opacity = S._lang === code ? '1' : '0.7';
+    const img = document.createElement('img');
+    img.src = `config/lang/flags/${code}.gif`;
+    img.width = 24; img.height = 18;
+    img.alt = code.toUpperCase();
+    img.style.cssText = 'display:block;border-radius:2px';
+    btn.appendChild(img);
+    btn.addEventListener('click', () => setLang(code));
+    bar.appendChild(btn);
+  });
+}
+
+initLangBar().then(async () => {
+  const s = await window.electronAPI.loadSettings();
+  await setLang(s?.lang || 'fr');
+});
 setScreen('load');
 restorePaths();
 
@@ -2293,7 +2375,7 @@ restorePaths();
       collapsed = val;
       panel.classList.toggle('panel-collapsed', collapsed);
       btn.textContent = collapsed ? '◀' : '▶';
-      btn.title       = collapsed ? 'Développer' : 'Réduire';
+      btn.title       = collapsed ? LANG.btn_expand||'Développer' : LANG.btn_collapse||'Réduire';
       if (save) window.electronAPI.saveSettings({ [settingKey]: collapsed });
     }
 
@@ -2364,7 +2446,7 @@ async function saveGamePrefs() {
 function renderEmuList(editIdx=null) {
   const list = document.getElementById('emu-list');
   list.innerHTML = '';
-  if (!S.emulators.length) { list.innerHTML = '<div class="emu-empty">Aucun émulateur configuré.</div>'; return; }
+  if (!S.emulators.length) { list.innerHTML = `<div class="emu-empty">${LANG.emu_none_configured||'Aucun émulateur configuré.'}</div>`; return; }
 
   let _dragSrcIdx = null;
 
@@ -2467,7 +2549,7 @@ function _renderTokens() {
       btnCancel.id = 'emu-cancel-edit';
       btnCancel.className = 'btn-clr';
       btnCancel.style.cssText = 'font-size:11px;padding:7px 10px;border-radius:3px;cursor:pointer;';
-      btnCancel.textContent = 'Annuler';
+      btnCancel.textContent = LANG.btn_cancel||'Annuler';
       btnCancel.addEventListener('click', () => window._resetEmuForm());
       btnAdd.insertAdjacentElement('afterend', btnCancel);
     }
@@ -2543,7 +2625,7 @@ function showCtxMenu(e, file) {
   ctxMenu.appendChild(opn);
 
   const rev=document.createElement('div'); rev.className='ctx-item';
-  rev.innerHTML='📂 <span>Révéler dans l\'explorateur</span>';
+  rev.innerHTML=`📂 <span>${LANG.ctx_reveal||"Révéler dans l'explorateur"}</span>`;
   rev.addEventListener('click', ev=>{ ev.stopPropagation(); window.electronAPI.revealFile(file.path); hideCtxMenu(); });
   ctxMenu.appendChild(rev);
 
@@ -2551,10 +2633,10 @@ function showCtxMenu(e, file) {
 
   if (!S.emulators.length) {
     const n=document.createElement('div'); n.className='ctx-item ctx-disabled';
-    n.innerHTML='▶ <span>Aucun émulateur configuré</span>'; ctxMenu.appendChild(n);
+    n.innerHTML=`▶ <span>${LANG.emu_none_configured||'Aucun émulateur configuré'}</span>`; ctxMenu.appendChild(n);
   } else {
     const lhdr=document.createElement('div'); lhdr.className='ctx-sub-hdr';
-    lhdr.textContent='Lancer avec…'; ctxMenu.appendChild(lhdr);
+    lhdr.textContent=LANG.ctx_launch_with||'Lancer avec…'; ctxMenu.appendChild(lhdr);
     S.emulators.forEach(emu => {
       const ei=document.createElement('div'); ei.className='ctx-item';
       ei.innerHTML=`▶ <span>${esc(emu.name)}</span>`;
@@ -2611,7 +2693,7 @@ function showCtxMenu(e, file) {
 
     const div = document.createElement('div');
     div.className = 'cline';
-    if (text.startsWith('▶')) { div.classList.add('cmd'); setStatus('En cours…', 'running'); }
+    if (text.startsWith('▶')) { div.classList.add('cmd'); setStatus(LANG.status_running||'En cours…', 'running'); }
     else if (text.startsWith('❌') || /\berror\b|\berr:/i.test(text)) { div.classList.add('err'); setStatus('Erreur', 'err'); }
     else if (text.startsWith('⏹')) { div.classList.add('done'); setStatus(text, 'done'); }
     else if (/\bwarning\b|\binfo\b/i.test(text)) div.classList.add('info');
@@ -2695,7 +2777,7 @@ function showCtxMenu(e, file) {
   window.updateSnapPanel = async function(shortName) {
     if (!shortName) {
       img.style.display = 'none'; emptyEl.style.display = '';
-      emptyEl.textContent = 'Sélectionne un jeu'; return;
+      emptyEl.textContent = LANG.select_game||'Sélectionne un jeu'; return;
     }
     const url = await window.electronAPI.findSnap(shortName);
 if (url && typeof url === 'string') {
@@ -2706,8 +2788,8 @@ if (url && typeof url === 'string') {
   img.style.display = 'none';
   emptyEl.style.display = '';
   emptyEl.innerHTML = url?.noFolder
-    ? `<div style="text-align:center">Aucune image<br><span style="color:#fff;font-size:10px">(le dossier <b><i>snap</i></b> n'existe pas)</span></div>`
-    : '<div style="text-align:center">Aucune image</div>';
+    ? `<div style="text-align:center">Aucune image<br><span style="color:#fff;font-size:10px">(${LANG.snap_no_folder_hint||"le dossier <b><i>snap</i></b> n'existe pas"})</span></div>`
+    : `<div style="text-align:center">${LANG.snap_no_image||'Aucune image'}</div>`;
 }
   };
 
