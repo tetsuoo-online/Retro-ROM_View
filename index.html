@@ -276,7 +276,7 @@
   /* RIGHT — panneau romset fixe */
   #rs-panel {
     width:310px; min-width:180px; max-width:620px; flex-shrink:0; display:flex; flex-direction:column;
-    background:var(--bg2); overflow:hidden; position:relative;
+    background:var(--bg2); position:relative;
   }
   #rs-resize-handle {
     position:absolute; left:0; top:0; bottom:0; width:5px; cursor:col-resize;
@@ -426,7 +426,7 @@
   .rsp-meta { padding:8px 12px 6px; display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-size:10px; }
   .rsp-meta-k { color:var(--text-dim); }
   .rsp-meta-v { color:var(--text); word-break:break-all; }
-  .rom-list-wrap { max-height:380px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .rom-list-wrap { overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
   .rom-entry { display:grid; grid-template-columns:1fr auto auto; gap:2px 6px; padding:4px 12px; border-bottom:1px solid var(--border); font-size:10px; align-items:baseline; }
   .rom-entry:last-child { border-bottom:none; }
   .rom-entry:hover { background:var(--bg3); }
@@ -446,6 +446,26 @@
   .rs-compat-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
   .rs-compat-lbl { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rs-compat-val { font-size:9px; font-weight:700; }
+  /* ROMSETS DRAWER (bas du panneau Compatibilité) */
+  #rs-romsets-drawer {
+    flex-shrink:0; display:flex; flex-direction:column;
+    border-top:1px solid var(--border); background:var(--bg2);
+    overflow:hidden; transition:height 0.2s ease; height:28px;
+  }
+  #rs-romsets-drawer.expanded { height:220px; }
+  #rs-romsets-bar {
+    display:flex; align-items:center; gap:6px; height:28px;
+    padding:0 12px; flex-shrink:0; cursor:pointer; user-select:none;
+    transition:background 0.15s;
+  }
+  #rs-romsets-bar:hover { background:var(--bg3); }
+  #rs-romsets-bar-arrow { font-size:9px; color:var(--text-dim); transition:transform 0.2s; flex-shrink:0; }
+  #rs-romsets-drawer.expanded #rs-romsets-bar-arrow { transform:rotate(180deg); }
+  #rs-romsets-bar-title { font-size:10px; color:var(--text-dim); font-weight:700; letter-spacing:0.5px; }
+  #rs-romsets-body {
+    flex:1; overflow-y:auto; padding:0 6px;
+    scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+  }
 
   /* Chips "Autre DAT" dans lcard-other */
   #other-chips { display:flex; flex-direction:column; gap:3px; margin-top:4px; max-height:90px; overflow-y:auto; width:100%; }
@@ -888,6 +908,13 @@
     <div id="rs-collapsed-tab" class="panel-collapsed-tab">
       <span class="pct-arrow">◀</span>
       <span class="pct-label" data-lang="compat_short">Compat.</span>
+    </div>
+    <div id="rs-romsets-drawer">
+      <div id="rs-romsets-bar">
+        <span id="rs-romsets-bar-arrow">▲</span>
+        <span id="rs-romsets-bar-title">ROMSETS</span>
+      </div>
+      <div id="rs-romsets-body"></div>
     </div>
   </div>
 </div>
@@ -1809,7 +1836,7 @@ function updateRsPanel(g) {
 }
 
 let _rsPanelRomSort = true; // true = A→Z (défaut)
-let _rsCompatCollapsed = false;
+let _rsRomsetDrawerExpanded = false;
 
 function renderRsPanelDat(container, g, dat) {
   const gd = dat.games.get(g.shortName);
@@ -1880,16 +1907,13 @@ function renderRsPanelDat(container, g, dat) {
   romSec.appendChild(hdr); romSec.appendChild(body);
   container.appendChild(romSec);
 
-  // ── Romsets — collé à la liste ROM, même container ───────────────────────
+  // ── Romsets drawer (bas du panneau, collapsible) ─────────────────────────
+  const rsRomDrawer = document.getElementById('rs-romsets-drawer');
+  const rsRomBody   = document.getElementById('rs-romsets-body');
+  const rsRomBar    = document.getElementById('rs-romsets-bar');
+  if (rsRomBody) rsRomBody.innerHTML = '';
   const activeDats = getActiveDats();
-  if (activeDats.length > 0) {
-    const cs = document.createElement('div'); cs.className='rs-compat-sum';
-    const csHdr = document.createElement('div');
-    csHdr.className = 'rsp-sec-hdr';
-    csHdr.innerHTML = `<span>Romsets</span><span style="font-size:9px;color:var(--text-dim)">${_rsCompatCollapsed ? '▶' : '▼'}</span>`;
-    cs.appendChild(csHdr);
-    const csBody = document.createElement('div');
-    csBody.style.display = _rsCompatCollapsed ? 'none' : '';
+  if (activeDats.length > 0 && rsRomBody) {
     activeDats.forEach(d => {
       const ok = d.games.has(g.shortName);
       const isActive = d.id === S.activeDatId;
@@ -1907,17 +1931,17 @@ function renderRsPanelDat(container, g, dat) {
           updateZipPanel(g);
         });
       }
-      csBody.appendChild(row);
+      rsRomBody.appendChild(row);
     });
-    cs.appendChild(csBody);
-    csHdr.addEventListener('click', () => {
-      const nowCollapsed = csBody.style.display !== 'none';
-      csBody.style.display = nowCollapsed ? 'none' : '';
-      csHdr.querySelector('span:last-child').textContent = nowCollapsed ? '▶' : '▼';
-      _rsCompatCollapsed = nowCollapsed;
-      window.electronAPI.saveSettings({ rsCompatCollapsed: nowCollapsed });
-    });
-    container.appendChild(cs);
+    // toggle drawer
+    if (rsRomBar && !rsRomBar._listenerAttached) {
+      rsRomBar._listenerAttached = true;
+      rsRomBar.addEventListener('click', () => {
+        const expanded = rsRomDrawer.classList.toggle('expanded');
+        window.electronAPI?.saveSettings({ rsRomsetDrawerExpanded: expanded });
+      });
+    }
+    if (_rsRomsetDrawerExpanded && rsRomDrawer) rsRomDrawer.classList.add('expanded');
   }
 }
 
@@ -2178,7 +2202,7 @@ async function restorePaths() {
   const s = await window.electronAPI.loadSettings();
   if (s) {
     if (s.hideTags !== undefined) S.uiPrefs.hideTags = s.hideTags;
-    if (s.rsCompatCollapsed !== undefined) _rsCompatCollapsed = s.rsCompatCollapsed;
+    if (s.rsRomsetDrawerExpanded !== undefined) _rsRomsetDrawerExpanded = s.rsRomsetDrawerExpanded;
     if (s.lastSearch) {
       S.search = s.lastSearch;
       const el = document.getElementById('search');
