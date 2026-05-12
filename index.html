@@ -693,7 +693,7 @@
   </div>
   <div class="hdr-div"></div>
   <div id="hdr-lang">
-    <button id="lang-fr" title="Français" onclick="setLang('fr')" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.7;transition:opacity 0.15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.7">
+    <button id="lang-fr" title="Français" onclick="setLang('fr')" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.5;transition:opacity 0.15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.5">
       <img src="config/lang/flags/fr.gif" width="24" height="24" alt="FR" style="display:block;border-radius:2px">
     </button>
   </div>
@@ -996,7 +996,7 @@ async function setLang(code) {
   await window.electronAPI.saveSettings({ lang: code });
   // Highlight active flag
   document.querySelectorAll('#hdr-lang button').forEach(btn => {
-    btn.style.opacity = btn.title.toLowerCase() === code ? '1' : '0.7';
+    btn.style.opacity = btn.title.toLowerCase() === code ? '1' : '0.5';
   });
 }
 
@@ -2286,9 +2286,9 @@ async function initLangBar() {
   codes.forEach(code => {
     const btn = document.createElement('button');
     btn.title = code.toUpperCase();
-    btn.style.cssText = 'background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.7;transition:opacity 0.15s';
+    btn.style.cssText = 'background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;opacity:0.5;transition:opacity 0.15s';
     btn.onmouseenter = () => btn.style.opacity = '1';
-    btn.onmouseleave = () => btn.style.opacity = S._lang === code ? '1' : '0.7';
+    btn.onmouseleave = () => btn.style.opacity = S._lang === code ? '1' : '0.5';
     const img = document.createElement('img');
     img.src = `config/lang/flags/${code}.gif`;
     img.width = 24; img.height = 18;
