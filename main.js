@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray } = require('electron');
 const path = require('path');
 const fs   = require('fs');
 const { spawn } = require('child_process');
@@ -6,11 +6,13 @@ const { pathToFileURL } = require('url');
 
 // ─── WINDOW ──────────────────────────────────────────────────────────────────
 let mainWin = null;
+let tray = null;
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440, height: 900,
     minWidth: 900, minHeight: 600,
+	icon: path.join(__dirname, 'Bomberman2.ico'), // Windows
     title: 'Retro-ROM View',
     webPreferences: {
       nodeIntegration: false,
@@ -32,9 +34,12 @@ function createWindow() {
   win.on('closed', () => { mainWin = null; });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+});
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+
 
 // ─── ROM SCAN ────────────────────────────────────────────────────────────────
 const ROM_EXTS = /\.(zip|7z|chd|rom|bin|img|iso)$/i;
@@ -161,17 +166,43 @@ function sendToConsole(line) {
   }
 }
 
-ipcMain.handle('launch-emulator', async (e, { exePath, resolvedArgs }) => {
+let _emuRunning = false;
+
+ipcMain.handle('launch-emulator', async (e, opts) => {
+  const { exePath, resolvedArgs } = opts;
+  if (_emuRunning) {
+    return { ok: false, error: 'Un émulateur est déjà en cours.' };
+  }
   try {
     const args = (resolvedArgs || []).filter(Boolean);
-    sendToConsole('▶ ' + exePath + ' ' + args.join(' '));
-    const child = spawn(exePath, args, { detached: false, stdio: ['ignore', 'pipe', 'pipe'], cwd: path.dirname(exePath) });
+    sendToConsole(`${exePath} ${args.join(' ')}`);
+    const child = spawn(exePath, args, {
+      detached: false, stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: path.dirname(exePath)
+    });
+    _emuRunning = true;
+
+    // Créer la tray au lancement
+    tray = new Tray(path.join(__dirname, 'Bomberman2.ico'));
+    tray.setToolTip('Retro-ROM View — émulateur en cours...');
+    tray.on('click', () => { if (!_emuRunning && mainWin) mainWin.show(); });
+    if (mainWin && !mainWin.isDestroyed()) mainWin.hide();
+
     child.stdout.on('data', d => d.toString().split('\n').forEach(l => l && sendToConsole(l)));
     child.stderr.on('data', d => d.toString().split('\n').forEach(l => l && sendToConsole(l)));
-    child.on('error', err => sendToConsole('❌ Erreur spawn: ' + err.message));
-    child.on('close', code => sendToConsole('⏹ Processus terminé (code ' + code + ')'));
+    child.on('error', err => { sendToConsole(`Erreur spawn: ${err.message}`); _emuRunning = false; });
+    child.on('close', code => {
+      sendToConsole(`Processus terminé (code ${code})`);
+      _emuRunning = false;
+      // Détruire la tray et rendre la fenêtre
+      if (tray) { tray.destroy(); tray = null; }
+      if (mainWin && !mainWin.isDestroyed()) mainWin.show();
+    });
     return { ok: true };
   } catch (err) {
+    _emuRunning = false;
+    if (tray) { tray.destroy(); tray = null; }
+    if (mainWin && !mainWin.isDestroyed()) mainWin.show();
     return { ok: false, error: err.message };
   }
 });
