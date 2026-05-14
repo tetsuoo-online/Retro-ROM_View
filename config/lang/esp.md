@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : a la papelera?
 ## emu_none_configured : No hay ningún emulador configurado.
 ## ctx_reveal : Mostrar en el Explorador
+## ctx_copy_to_roms :  Copiar en roms
 ## ctx_launch_with : Iniciar con…
 ## status_running : En ejecución…
 ## snap_no_image : Sin imagen

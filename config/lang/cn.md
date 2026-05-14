@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : 移到回收站？
 ## emu_none_configured : 未配置模拟器。
 ## ctx_reveal : 在资源管理器中显示
+## ctx_copy_to_roms : 复制到 roms 文件夹
 ## ctx_launch_with : 使用以下方式启动…
 ## status_running : 运行中…
 ## snap_no_image : 无图像

@@ -133,6 +133,37 @@ ipcMain.handle('reveal-file', async (e, filePath) => {
   shell.showItemInFolder(filePath);
 });
 
+// ─── COPY TO ROMS ─────────────────────────────────────────────────────────────
+ipcMain.handle('copy-to-roms', async (e, filePath) => {
+  try {
+    const romsDir  = path.join(__dirname, 'roms');
+    const fileName = path.basename(filePath);
+    if (!fs.existsSync(romsDir)) fs.mkdirSync(romsDir);
+
+    const rootDest = path.join(romsDir, fileName);
+    if (!fs.existsSync(rootDest)) {
+      fs.copyFileSync(filePath, rootDest);
+      return { ok: true, dest: rootDest };
+    }
+
+    // Trouver le premier sous-dossier numéroté disponible
+    let n = 1;
+    while (n <= 99) {
+      const sub  = path.join(romsDir, String(n).padStart(2, '0'));
+      const dest = path.join(sub, fileName);
+      if (!fs.existsSync(dest)) {
+        if (!fs.existsSync(sub)) fs.mkdirSync(sub);
+        fs.copyFileSync(filePath, dest);
+        return { ok: true, dest };
+      }
+      n++;
+    }
+    return { ok: false, error: 'Trop de copies existantes (> 99)' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
 ipcMain.handle('open-file', async (e, filePath) => {
   await shell.openPath(filePath);
 });

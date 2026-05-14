@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : をゴミ箱に移動しますか？
 ## emu_none_configured : エミュレーターが設定されていません。
 ## ctx_reveal : エクスプローラーで表示
+## ctx_copy_to_roms :  roms にコピー
 ## ctx_launch_with : 次で起動…
 ## status_running : 実行中…
 ## snap_no_image : 画像なし

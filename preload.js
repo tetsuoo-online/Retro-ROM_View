@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   trashFiles:         (paths) => ipcRenderer.invoke('trash-files', paths),
   deleteFiles:        (paths) => ipcRenderer.invoke('delete-files', paths),
   revealFile:         (filePath) => ipcRenderer.invoke('reveal-file', filePath),
+  copyToRoms:         (filePath) => ipcRenderer.invoke('copy-to-roms', filePath),
   openFile:           (filePath) => ipcRenderer.invoke('open-file', filePath),
   saveList:           (content) => ipcRenderer.invoke('save-list', content),
   loadSettings:       () => ipcRenderer.invoke('load-settings'),

@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : à la corbeille ?
 ## emu_none_configured : Aucun émulateur configuré.
 ## ctx_reveal : Révéler dans l'explorateur
+## ctx_copy_to_roms : Copier dans roms
 ## ctx_launch_with : Lancer avec…
 ## status_running : En cours…
 ## snap_no_image : Aucune image

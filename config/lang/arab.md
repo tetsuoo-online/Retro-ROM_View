@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : إلى سلة المهملات؟
 ## emu_none_configured : لم يتم تكوين أي محاكي.
 ## ctx_reveal : إظهار في المستكشف
+## ctx_copy_to_roms : نسخ إلى مجلد roms
 ## ctx_launch_with : تشغيل باستخدام…
 ## status_running : قيد التشغيل…
 ## snap_no_image : لا توجد صورة

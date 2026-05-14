@@ -2651,6 +2651,26 @@ function showCtxMenu(e, file) {
   rev.addEventListener('click', ev=>{ ev.stopPropagation(); window.electronAPI.revealFile(file.path); hideCtxMenu(); });
   ctxMenu.appendChild(rev);
 
+  const cpy=document.createElement('div'); cpy.className='ctx-item';
+  cpy.innerHTML=`📋 <span>${LANG.ctx_copy_to_roms||'Copier dans roms'}</span>`;
+  cpy.addEventListener('click', async ev => {
+    ev.stopPropagation(); hideCtxMenu();
+    const r = await window.electronAPI.copyToRoms(file.path);
+    if (r.ok) {
+      // Feedback visuel discret : teinte verte temporaire sur l'item
+      cpy.style.color = 'var(--green)';
+      const shortDest = r.dest.replace(/.*[/\\]roms[/\\]/, 'roms/');
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--green);color:var(--green);font-family:JetBrains Mono,monospace;font-size:11px;padding:7px 16px;border-radius:4px;z-index:9999;pointer-events:none;transition:opacity 0.4s';
+      toast.textContent = `✓ Copié → ${shortDest}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.remove(), 420); }, 2200);
+    } else {
+      alert('Erreur copie :\n' + r.error);
+    }
+  });
+  ctxMenu.appendChild(cpy);
+
   ctxMenu.appendChild(Object.assign(document.createElement('div'),{className:'ctx-sep'}));
 
   if (!S.emulators.length) {

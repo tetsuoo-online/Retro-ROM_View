@@ -105,6 +105,7 @@
 ## confirm_trash_suffix : para a lixeira?
 ## emu_none_configured : Nenhum emulador configurado.
 ## ctx_reveal : Mostrar no Explorer
+## ctx_copy_to_roms :  Copiar para roms
 ## ctx_launch_with : Abrir com…
 ## status_running : Em execução…
 ## snap_no_image : Sem imagem
