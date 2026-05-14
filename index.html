@@ -1845,9 +1845,7 @@ function renderRsPanelDat(container, g, dat) {
   // Métadonnées
   const metaSec=document.createElement('div'); metaSec.className='rsp-section';
   const rows=[];
-  <!-- if (gd.desc && gd.desc!==gd.name) rows.push(['Titre',gd.desc]); -->
-  <!-- if (gd.year) rows.push(['Année',gd.year]); -->
-  <!-- if (gd.mfr)  rows.push(['Fabricant',gd.mfr]); -->
+ 
   if (gd.cloneof) rows.push([LANG.compat_clone_of, gd.cloneof]);
   if (gd.clones?.length) rows.push([LANG.compat_variants, gd.clones.length]);
   const romTotalSz=gd.roms?gd.roms.reduce((s,r)=>s+r.size,0):0;

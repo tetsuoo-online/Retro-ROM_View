@@ -92,6 +92,11 @@
 ## zip_expected_missing : Attendu dans le DAT mais absent du ZIP
 ## zip_missing : manquant
 ## zip_no_dat : aucun DAT
+## zip_col_file : Fichier
+## zip_col_size : Taille
+## compat_variants : Variantes
+## compat_clone_of : Clone de
+## compat_size : Taille
 ## exp_file : fichier
 ## exp_marked : marqué
 ## exp_for_deletion : pour suppression
