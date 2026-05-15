@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer, webFrame, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  getVersion: () => ipcRenderer.invoke('get-version'),
   selectFolder:       () => ipcRenderer.invoke('select-folder'),
   scanFolder:         (p) => ipcRenderer.invoke('scan-folder', p),
   selectDat:          () => ipcRenderer.invoke('select-dat'),

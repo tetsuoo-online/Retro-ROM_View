@@ -4,6 +4,17 @@ const fs   = require('fs');
 const { spawn } = require('child_process');
 const { pathToFileURL } = require('url');
 
+// ─── VERSION ──────────────────────────────────────────────────────────────────
+function getPyprojectVersion() {
+  try {
+    const toml = fs.readFileSync(path.join(__dirname, 'pyproject.toml'), 'utf8');
+    const m = toml.match(/^version\s*=\s*"([^"]+)"/m);
+    return m ? m[1] : '?';
+  } catch { return '?'; }
+}
+
+ipcMain.handle('get-version', () => getPyprojectVersion());
+
 // ─── WINDOW ──────────────────────────────────────────────────────────────────
 let mainWin = null;
 let tray = null;

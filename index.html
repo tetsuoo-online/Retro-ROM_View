@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[ R3TRO-ROM VIEW v2.6 by Tetsuoo ]</title>
+<title>[ R3TRO-ROM VIEW by Tetsuoo ]</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap');
 
@@ -985,6 +985,7 @@
 </div>
 
 <script>
+window.electronAPI.getVersion().then(v => {  document.title = `[ R3TRO-ROM VIEW v${v} by Tetsuoo ]`; });
 // ─── LANG ────────────────────────────────────────────────────────────────────
 const LANG = {};
 async function loadLang(code) {
