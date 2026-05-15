@@ -23,6 +23,7 @@
 ## filter_missing : مفقود
 ## filter_dupes : التكرارات
 ## filter_multidat : متعدد DAT
+## filter_favs : ⭐ المفضلة
 ## sort_label : فرز
 ## sort_name : الاسم A→Z
 ## sort_desc : العنوان
@@ -106,6 +107,7 @@
 ## emu_none_configured : لم يتم تكوين أي محاكي.
 ## ctx_reveal : إظهار في المستكشف
 ## ctx_copy_to_roms : نسخ إلى مجلد roms
+## ctx_move_to_roms : انقل إلى مجلد roms
 ## ctx_launch_with : تشغيل باستخدام…
 ## status_running : قيد التشغيل…
 ## snap_no_image : لا توجد صورة

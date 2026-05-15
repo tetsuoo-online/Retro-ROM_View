@@ -798,6 +798,7 @@
         <button class="fbtn" data-f="missing" id="fb-missing" disabled><span data-lang="filter_missing">Manquants</span></button>
         <button class="fbtn" data-f="dupes"><span data-lang="filter_dupes">Doublons</span></button>
         <button class="fbtn" data-f="multi" id="fb-multi" disabled><span data-lang="filter_multidat">Multi-DAT</span></button>
+		<button class="fbtn" data-f="favs"  id="fb-favs"><span data-lang="filter_favs">⭐ Favoris</span></button>
       </div>
       <div id="rs-filter-row"></div>
       <div id="folder-filter-row"></div>
@@ -1496,6 +1497,10 @@ function applyFilterSort() {
     case 'missing': list=list.filter(g=>!g.isOrphan&&!g.hasInCollection); break;
     case 'dupes':   list=list.filter(g=>g.files.some(f=>f.isDupe)||g.files.length>1||g.clones.some(c=>c.files.length>1)); break;
     case 'multi':   list=list.filter(g=>g.rsCount>=2); break;
+	case 'favs':    list=list.filter(g=>
+      !!S.gamePrefs[g.shortName + '__fav'] ||
+      g.clones.some(c => !!S.gamePrefs[c.shortName + '__fav'])
+    ); break;
   }
 
   if(S.search){
@@ -2670,6 +2675,28 @@ function showCtxMenu(e, file) {
     }
   });
   ctxMenu.appendChild(cpy);
+
+  const mv=document.createElement('div'); mv.className='ctx-item';
+  mv.innerHTML=`✂️ <span>${LANG.ctx_move_to_roms||'Déplacer dans roms'}</span>`;
+  mv.addEventListener('click', async ev => {
+    ev.stopPropagation(); hideCtxMenu();
+    const r = await window.electronAPI.moveToRoms(file.path);
+    if (r.ok) {
+      const shortDest = r.dest.replace(/.*[/\\]roms[/\\]/, 'roms/');
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--accent2);color:var(--accent2);font-family:JetBrains Mono,monospace;font-size:11px;padding:7px 16px;border-radius:4px;z-index:9999;pointer-events:none;transition:opacity 0.4s';
+      toast.textContent = `✓ Déplacé → ${shortDest}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.remove(), 420); }, 2200);
+      // Retirer le fichier de la mémoire et reconstruire
+      S.folders.forEach(fd => { fd.files = fd.files.filter(f => f.path !== file.path); });
+      detectDupes(); buildGroups(); applyFilterSort();
+      if (S.activeId && S.groupsById.has(S.activeId)) openGroup(S.activeId);
+    } else {
+      alert('Erreur déplacement :\n' + r.error);
+    }
+  });
+  ctxMenu.appendChild(mv);
 
   ctxMenu.appendChild(Object.assign(document.createElement('div'),{className:'ctx-sep'}));
 

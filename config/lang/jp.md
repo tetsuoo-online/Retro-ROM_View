@@ -23,6 +23,7 @@
 ## filter_missing : 不足
 ## filter_dupes : 重複
 ## filter_multidat : 複数 DAT
+## filter_favs : ⭐ お気に入り
 ## sort_label : 並べ替え
 ## sort_name : 名前 A→Z
 ## sort_desc : タイトル
@@ -106,6 +107,7 @@
 ## emu_none_configured : エミュレーターが設定されていません。
 ## ctx_reveal : エクスプローラーで表示
 ## ctx_copy_to_roms :  roms にコピー
+## ctx_move_to_roms :  roms に移動
 ## ctx_launch_with : 次で起動…
 ## status_running : 実行中…
 ## snap_no_image : 画像なし

@@ -23,6 +23,7 @@
 ## filter_missing : 缺失
 ## filter_dupes : 重复项
 ## filter_multidat : 多 DAT
+## filter_favs : ⭐ 收藏夹
 ## sort_label : 排序
 ## sort_name : 名称 A→Z
 ## sort_desc : 标题
@@ -106,6 +107,7 @@
 ## emu_none_configured : 未配置模拟器。
 ## ctx_reveal : 在资源管理器中显示
 ## ctx_copy_to_roms : 复制到 roms 文件夹
+## ctx_move_to_roms : 移动到 roms 文件夹
 ## ctx_launch_with : 使用以下方式启动…
 ## status_running : 运行中…
 ## snap_no_image : 无图像

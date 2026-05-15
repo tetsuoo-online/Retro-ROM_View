@@ -164,6 +164,35 @@ ipcMain.handle('copy-to-roms', async (e, filePath) => {
   }
 });
 
+ipcMain.handle('move-to-roms', async (e, filePath) => {
+  try {
+    const romsDir  = path.join(__dirname, 'roms');
+    const fileName = path.basename(filePath);
+    if (!fs.existsSync(romsDir)) fs.mkdirSync(romsDir);
+
+    const rootDest = path.join(romsDir, fileName);
+    if (!fs.existsSync(rootDest)) {
+      fs.renameSync(filePath, rootDest);
+      return { ok: true, dest: rootDest };
+    }
+
+    let n = 1;
+    while (n <= 99) {
+      const sub  = path.join(romsDir, String(n).padStart(2, '0'));
+      const dest = path.join(sub, fileName);
+      if (!fs.existsSync(dest)) {
+        if (!fs.existsSync(sub)) fs.mkdirSync(sub);
+        fs.renameSync(filePath, dest);
+        return { ok: true, dest };
+      }
+      n++;
+    }
+    return { ok: false, error: 'Trop de copies existantes (> 99)' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
 ipcMain.handle('open-file', async (e, filePath) => {
   await shell.openPath(filePath);
 });

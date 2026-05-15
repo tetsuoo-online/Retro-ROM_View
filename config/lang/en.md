@@ -23,6 +23,7 @@
 ## filter_missing : Missing
 ## filter_dupes : Duplicates
 ## filter_multidat : Multi-DAT
+## filter_favs : ⭐ Favorites
 ## sort_label : Sort
 ## sort_name : Name A→Z
 ## sort_desc : Title
@@ -106,6 +107,7 @@
 ## emu_none_configured : No emulator configured.
 ## ctx_reveal : Reveal in Explorer
 ## ctx_copy_to_roms : Copy to roms
+## ctx_move_to_roms : Move to roms
 ## ctx_launch_with : Launch with…
 ## status_running : Running…
 ## snap_no_image : No image
