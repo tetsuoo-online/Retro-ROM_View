@@ -250,7 +250,7 @@
   .rtbl tr:hover td { background:var(--bg3); }
   .rtbl tr.del-row td { opacity:0.35; }
   .rtbl tr.del-row .col-fn { text-decoration:line-through; color:var(--red); opacity:1; }
-  .col-fn  { font-weight:500; word-break:break-all; }
+  .col-fn  { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:80px; }
   .col-fav  { width:28px; text-align:center; padding:4px 6px; }
   .col-fav input[type=checkbox] { cursor:pointer; accent-color:var(--accent); width:13px; height:13px; }
   .col-sz  { color:var(--text-mid); white-space:nowrap; }
@@ -261,7 +261,7 @@
   .del-btn.undo:hover { background:#4fc97e11; }
   .open-btn { background:none; border:1px solid #1e2f51; color:var(--darkblue); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight: bold; padding:2px 7px; border-radius:2px; cursor:pointer; transition:all 0.15s; margin-left:4px; }
   .open-btn:hover { border-color:var(--accent2); color:var(--accent2); }
-  .col-path { color:var(--text-dim); font-size:10px; max-width:30vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; transition:color 0.15s; }
+  .col-path { color:var(--text-dim); font-size:10px; width:99%; max-width:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; transition:color 0.15s; }
   .col-path:hover { color:var(--accent); text-decoration:underline; }
   .clone-item { display:flex; align-items:center; gap:7px; padding:5px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; font-size:11px; margin-bottom:4px; }
   .clone-item .ci-name { font-weight:500; color:var(--text); white-space:nowrap; }
@@ -1699,9 +1699,26 @@ function openGroup(id){
     const sec=document.createElement('div');
     const tbl=document.createElement('table'); tbl.className='rtbl';
     const showFolderCol = S.folders.length > 1;
-    tbl.innerHTML=`<thead><tr><th class="col-fav" title="${LANG.col_fav||'Favori'}">🌟</th><th>${LANG.col_file||'Fichier'}</th><th>${LANG.col_role||'Rôle'}</th>${showFolderCol?`<th>${LANG.col_folder||'Dossier'}</th>`:''}<th>${LANG.col_size||'Taille'}</th><th>${LANG.col_path||'Chemin'}</th><th></th></tr></thead>`;
+    const _fArrow = key => {
+      if (_fileSort !== key) return '';
+      if (key === 'size') return _fileSortRev ? ' ▲' : ' ▼';
+      return _fileSortRev ? ' ▲' : ' ▼';
+    };
+    tbl.innerHTML=`<thead><tr><th class="col-fav" title="${LANG.col_fav||'Favori'}">🌟</th><th data-sort="name" style="cursor:pointer;white-space:nowrap">${LANG.col_file||'Fichier'} ${_fArrow('name')}</th><th>${LANG.col_role||'Rôle'}</th>${showFolderCol?`<th>${LANG.col_folder||'Dossier'}</th>`:''}<th data-sort="size" style="cursor:pointer;white-space:nowrap">${LANG.col_size||'Taille'} ${_fArrow('size')}</th><th data-sort="path" style="cursor:pointer;white-space:nowrap;width:99%">${LANG.col_path||'Chemin'} ${_fArrow('path')}</th><th></th></tr></thead>`;
+    tbl.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (_fileSort===key) _fileSortRev=!_fileSortRev; else { _fileSort=key; _fileSortRev=false; }
+        openGroup(S.activeId);
+      });
+    });
     const tbody=document.createElement('tbody');
-    ownFiles.forEach(f=>{
+    // sort ownFiles
+    const _sortedFiles = [...ownFiles];
+    if (_fileSort==='size') _sortedFiles.sort((a,b)=>_fileSortRev?a.size-b.size:b.size-a.size);
+    else if (_fileSort==='path') _sortedFiles.sort((a,b)=>_fileSortRev?b.path.localeCompare(a.path):a.path.localeCompare(b.path));
+    else _sortedFiles.sort((a,b)=>_fileSortRev?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
+    _sortedFiles.forEach(f=>{
       const tr=document.createElement('tr');
       if(S.toDelete.has(f.path)) tr.classList.add('del-row');
       const roleBadge=f.role==='parent'?`<span class="bdg bdg-ok">parent</span>`:`<span class="bdg bdg-clone">clone</span>`;
@@ -1843,6 +1860,7 @@ function updateRsPanel(g) {
 
 let _rsPanelRomSort = true; // true = A→Z (défaut)
 let _rsRomsetDrawerExpanded = false;
+let _fileSort = 'name'; let _fileSortRev = false;
 
 function renderRsPanelDat(container, g, dat) {
   const gd = dat.games.get(g.shortName);
@@ -1873,7 +1891,7 @@ function renderRsPanelDat(container, g, dat) {
   const sortBtn=document.createElement('button');
   sortBtn.title='Trier alphabétiquement';
   sortBtn.style.cssText='background:none;border:1px solid var(--border);color:var(--text-dim);font-family:JetBrains Mono,monospace;font-size:9px;padding:1px 5px;border-radius:3px;cursor:pointer;transition:all 0.15s;flex-shrink:0;';
-  function updateSortBtn(){ sortBtn.textContent = _rsPanelRomSort ? 'A→Z ▲' : 'A→Z ▼'; sortBtn.style.color=_rsPanelRomSort?'var(--accent)':'var(--text-dim)'; sortBtn.style.borderColor=_rsPanelRomSort?'var(--accent)':'var(--border)'; }
+  function updateSortBtn(){ sortBtn.textContent = _rsPanelRomSort ? 'A→Z ▼' : 'Z→A ▲'; sortBtn.style.color=_rsPanelRomSort?'var(--accent)':'var(--text-dim)'; sortBtn.style.borderColor=_rsPanelRomSort?'var(--accent)':'var(--border)'; }
   updateSortBtn();
 
   hdr.style.cssText+='display:flex;align-items:center;justify-content:space-between;gap:6px;';
