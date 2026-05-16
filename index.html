@@ -2130,10 +2130,16 @@ async function exportList(){
 async function trashMarked(){
   const paths=[...S.toDelete];
   if(!paths.length) return;
-  if(!confirm(`${LANG.confirm_trash_prefix||'Envoyer'} ${paths.length} ${LANG.confirm_trash_file||'fichier'}${paths.length>1?'s':''} ${LANG.confirm_trash_suffix||'à la corbeille ?'}`)) return;
+  const ok = await window.electronAPI.confirm(`${LANG.confirm_trash_prefix||'Envoyer'} ${paths.length} ${LANG.confirm_trash_file||'fichier'}${paths.length>1?'s':''} ${LANG.confirm_trash_suffix||'à la corbeille ?'}`);
+  if(!ok) return;
   const {errors}=await window.electronAPI.trashFiles(paths);
   if(errors.length) alert('Erreurs :\n'+errors.map(e=>e.path+'\n'+e.error).join('\n'));
-  S.toDelete.clear(); updateExportBar(); if(S.activeId) openGroup(S.activeId);
+  const trashed = new Set(paths.filter(p => !errors.find(e => e.path === p)));
+  S.folders.forEach(fd => { fd.files = fd.files.filter(f => !trashed.has(f.path)); });
+  S.toDelete.clear();
+  detectDupes(); buildGroups(); applyFilterSort();
+  updateExportBar();
+  if (S.activeId && S.groupsById.has(S.activeId)) openGroup(S.activeId);
 }
 
 // ─── TOOLBAR ─────────────────────────────────────────────────────────────────

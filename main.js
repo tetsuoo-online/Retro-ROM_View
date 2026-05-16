@@ -85,6 +85,17 @@ function scanFolder(dirPath) {
 
 // ─── IPC ─────────────────────────────────────────────────────────────────────
 
+ipcMain.handle('confirm', async (e, message) => {
+  const { response } = await dialog.showMessageBox(mainWin, {
+    type: 'question',
+    buttons: ['Annuler', 'OK'],
+    defaultId: 1,
+    cancelId: 0,
+    message,
+  });
+  return response === 1;
+});
+
 ipcMain.handle('select-folder', async () => {
   const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
   if (result.canceled || !result.filePaths.length) return null;

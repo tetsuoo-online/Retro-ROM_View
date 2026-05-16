@@ -26,4 +26,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readZipContents:  (p)    => ipcRenderer.invoke('read-zip-contents', p),
   findSnap:      (shortName) => ipcRenderer.invoke('find-snap', shortName),
   listLangFlags: ()           => ipcRenderer.invoke('list-lang-flags'),
+  confirm:        (msg)        => ipcRenderer.invoke('confirm', msg),
 });
